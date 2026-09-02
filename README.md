@@ -1,0 +1,76 @@
+# TreatmentTrack
+
+Follows up quoted-but-declined dental treatment plans (implants, crowns,
+ortho, whitening) by SMS, WhatsApp and email until the patient books or
+opts out — built for UK dental practices running Dentally or SOE, with a
+consent model that matches PECR/GDPR rather than a generic "recall
+reminders" toggle.
+
+## Stack
+
+Next.js (App Router, TypeScript) · Supabase (Postgres, Auth, RLS) · Stripe
+Checkout · Twilio (SMS, with a WhatsApp Business API integration point) ·
+Tailwind CSS · deployed to Vercel.
+
+## Getting started
+
+1. Install dependencies: `npm install`
+2. Copy `.env.example` to `.env.local` and fill in at least the Supabase
+   values — everything else (Stripe, Twilio, WhatsApp, email) can be left
+   blank and the app will show "not connected yet" states rather than
+   crashing.
+3. Create a Supabase project and run the migration in
+   `supabase/migrations/0001_init.sql` against it (via the Supabase SQL
+   editor, or `supabase db push` if you're using the CLI).
+4. `npm run dev` and visit `http://localhost:3000`.
+
+## Billing flow
+
+Signup never creates a usable account on its own — payment has to succeed
+first:
+
+1. `/signup` collects practice name, owner name and email, then creates a
+   Stripe Checkout Session (`/api/stripe/checkout`) and redirects there.
+2. Stripe's `checkout.session.completed` webhook (`/api/stripe/webhook`) is
+   the *only* place a `practices` row and its owner account get created —
+   never the client-side redirect back to `/signup/success`.
+3. The owner is invited by email (Supabase's `inviteUserByEmail`) and sets
+   their password on `/login`, which finishes onboarding.
+
+To test this locally, use the Stripe CLI:
+
+```
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+## Automated sequence
+
+Two cron routes, intended to be triggered by Vercel Cron (see
+`vercel.json`) with `Authorization: Bearer $CRON_SECRET`:
+
+- `/api/cron/send-sequence` — sends any due Day 3/7/14/30 steps, checking
+  patient opt-out status again at send time (not just when scheduled).
+- `/api/cron/future-intent` — converts "remind me in N months" treatments
+  into an active sequence once their date arrives.
+
+Inbound STOP replies are handled by `/api/webhooks/twilio/inbound`, which
+should be set as the "A message comes in" webhook on your Twilio number —
+it withdraws consent and cancels every pending sequence step for that
+patient immediately.
+
+## Compliance model
+
+- Two consent categories are captured and stored separately, timestamped,
+  and never mutated after the fact (`consents` is append-only — see the
+  trigger in the migration): `quote_followup` (the PECR soft opt-in for a
+  specific declined quote) and `cross_sell` (separate consent to be
+  contacted about other treatment based on dental history).
+- A database trigger on `treatments` refuses to create a treatment without
+  a granted `quote_followup` consent on file — this isn't just a form
+  validation.
+- The cross-sell suggestion path in Log Visit (`lib/actions/visits.ts`)
+  hard-blocks on missing `cross_sell` consent for that specific patient,
+  regardless of the practice-wide cross-sell toggle in Settings.
+- Every rendered message gets an opt-out appended automatically if the
+  practice's own template doesn't already include one
+  (`lib/messaging/provider.ts`).

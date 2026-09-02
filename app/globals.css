@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  /* Deep teal — primary brand color */
+  --color-teal-950: #07211f;
+  --color-teal-900: #0d3532;
+  --color-teal-800: #124742;
+  --color-teal-700: #185c54;
+  --color-teal-600: #1f7268;
+  --color-teal-500: #2b8c7e;
+  --color-teal-400: #4ba699;
+  --color-teal-300: #85c2b6;
+  --color-teal-200: #bcded4;
+  --color-teal-100: #ddeee8;
+  --color-teal-50: #f0f8f4;
+
+  /* Warm gold — accent, used sparingly for money/attention */
+  --color-gold-700: #8a6a17;
+  --color-gold-600: #ac871f;
+  --color-gold-500: #c9a227;
+  --color-gold-400: #ddbb55;
+  --color-gold-300: #e9d189;
+  --color-gold-200: #f2e3b8;
+  --color-gold-100: #f8f0d9;
+
+  /* Cream — background */
+  --color-cream-200: #efe6d2;
+  --color-cream-100: #f5efdf;
+  --color-cream-50: #faf6ec;
+  --color-cream-0: #fdfbf5;
+
+  /* Clay — status/lost, warm rather than alarming red */
+  --color-clay-700: #7a3a2c;
+  --color-clay-600: #a34b36;
+  --color-clay-500: #c05f45;
+  --color-clay-100: #f3e0d8;
+
+  /* Ink — near-black warm text color */
+  --color-ink-900: #1c1a15;
+  --color-ink-700: #3a362c;
+  --color-ink-500: #6b6558;
+  --color-ink-300: #a49d8c;
+
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-cream-50);
+  color: var(--color-ink-900);
+}
+
+/* Ledger motif: a faint horizontal rule pattern behind money figures,
+   evoking a paper ledger page rather than a generic stat card. */
+.ledger-lines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 27px,
+    color-mix(in srgb, var(--color-teal-900) 8%, transparent) 28px
+  );
+}
