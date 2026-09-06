@@ -35,7 +35,7 @@ export function Hero() {
             </LinkButton>
           </div>
           <p className="mt-4 text-sm text-ink-500">
-            £149/mo to start. Checkout takes three minutes — no sales call.
+            From £99/mo. Checkout takes three minutes — no sales call.
           </p>
         </div>
         <LedgerPreview />

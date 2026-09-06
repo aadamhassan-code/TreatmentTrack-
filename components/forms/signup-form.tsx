@@ -3,18 +3,19 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import type { Plan, BillingInterval } from "@/lib/types";
+import type { CheckoutPlan, BillingInterval } from "@/lib/types";
 
-const planCopy: Record<Plan, { label: string; monthly: number; annual: number }> = {
-  starter: { label: "Starter", monthly: 149, annual: 124 },
-  growth: { label: "Growth", monthly: 299, annual: 249 },
+const planCopy: Record<CheckoutPlan, { label: string; monthly: number; annual: number }> = {
+  solo: { label: "Solo", monthly: 99, annual: 82 },
+  practice: { label: "Practice", monthly: 199, annual: 165 },
+  multisite: { label: "Multisite", monthly: 399, annual: 332 },
 };
 
 export function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const plan = (searchParams.get("plan") as Plan) || "starter";
+  const plan = (searchParams.get("plan") as CheckoutPlan) || "practice";
   const interval = (searchParams.get("interval") as BillingInterval) || "monthly";
   const canceled = searchParams.get("canceled");
 
@@ -24,7 +25,7 @@ export function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const price = planCopy[plan]?.[interval] ?? planCopy.starter.monthly;
+  const price = planCopy[plan]?.[interval] ?? planCopy.practice.monthly;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,7 +59,7 @@ export function SignupForm() {
         Step 1 of 2
       </p>
       <h1 className="mt-2 font-display text-3xl font-medium text-ink-900">
-        Set up {planCopy[plan]?.label ?? "Starter"}
+        Set up {planCopy[plan]?.label ?? "Practice"}
       </h1>
       <p className="mt-2 text-sm text-ink-500">
         £{price}/month, billed {interval}. You&rsquo;ll pay on the next
@@ -75,7 +76,7 @@ export function SignupForm() {
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <div>
           <label className="block text-sm font-medium text-ink-900" htmlFor="practiceName">
-            Practice name
+            {plan === "solo" ? "Practice or trading name" : "Practice name"}
           </label>
           <input
             id="practiceName"
@@ -83,7 +84,7 @@ export function SignupForm() {
             value={practiceName}
             onChange={(e) => setPracticeName(e.target.value)}
             className="mt-1.5 w-full rounded-lg border border-ink-900/15 bg-cream-0 px-3.5 py-2.5 text-sm focus:border-teal-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
-            placeholder="Riverside Dental"
+            placeholder={plan === "solo" ? "Priya Shah Dental" : "Riverside Dental"}
           />
         </div>
         <div>

@@ -4,41 +4,51 @@ import { useState } from "react";
 import { LinkButton } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, PhoneCall } from "lucide-react";
 
 const plans = [
   {
-    name: "Starter",
-    monthly: 149,
-    annual: 124,
-    annualTotal: 1490,
-    description:
-      "For a single-site practice that wants declined quotes followed up properly.",
+    name: "Solo",
+    monthly: 99,
+    annual: 82,
+    annualTotal: 990,
+    description: "For an individual dentist following up their own quotes.",
     features: [
-      "Up to 60 active quoted treatments/month",
+      "Up to 30 active quoted treatments/month",
       "SMS + email follow-up sequences",
       "Day 3 / 7 / 14 / 30 automated sequence",
       "Dual consent capture with timestamped audit trail",
-      "1 practice location",
-      "Email support",
+      "1 user login",
     ],
   },
   {
-    name: "Growth",
-    monthly: 299,
-    annual: 249,
-    annualTotal: 2990,
-    description:
-      "For multi-chair or multi-site practices that also want compliant cross-sell.",
+    name: "Practice",
+    monthly: 199,
+    annual: 165,
+    annualTotal: 1990,
+    description: "For a single practice with a full team.",
     features: [
-      "Unlimited active quoted treatments",
+      "Up to 150 active quoted treatments/month",
       "SMS + WhatsApp + email",
-      "Everything in Starter",
-      "Cross-sell suggestion engine from Log Visit",
-      "Up to 3 practice locations",
-      "Priority support",
+      "Everything in Solo",
+      "Unlimited staff logins",
+      "1 practice location",
     ],
     highlight: true,
+  },
+  {
+    name: "Multisite",
+    monthly: 399,
+    annual: 332,
+    annualTotal: 3990,
+    description: "For groups running up to 5 practices.",
+    features: [
+      "Unlimited active quoted treatments",
+      "Everything in Practice",
+      "Cross-sell suggestion engine from Log Visit",
+      "Up to 5 practice locations",
+      "Priority support",
+    ],
   },
 ];
 
@@ -86,7 +96,7 @@ export function PricingTable() {
         </span>
       </div>
 
-      <div className="mx-auto mt-10 grid max-w-3xl gap-6 md:grid-cols-2">
+      <div className="mx-auto mt-10 grid max-w-5xl gap-6 md:grid-cols-3">
         {plans.map((plan) => (
           <Card
             key={plan.name}
@@ -138,6 +148,27 @@ export function PricingTable() {
             </CardBody>
           </Card>
         ))}
+      </div>
+
+      <div className="mx-auto mt-6 max-w-5xl">
+        <Card className="border-dashed">
+          <CardBody className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
+            <div>
+              <h3 className="font-display text-xl font-medium text-ink-900">
+                Running more than 5 practices?
+              </h3>
+              <p className="mt-1 text-sm text-ink-500">
+                Group pricing, rollout support and a single billing
+                arrangement across your sites — request a callback and
+                we&rsquo;ll work out a price with you directly.
+              </p>
+            </div>
+            <LinkButton href="/request-callback" variant="secondary" className="shrink-0">
+              <PhoneCall className="h-4 w-4" />
+              Request a callback
+            </LinkButton>
+          </CardBody>
+        </Card>
       </div>
     </div>
   );

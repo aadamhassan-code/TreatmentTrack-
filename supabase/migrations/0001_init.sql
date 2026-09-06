@@ -9,7 +9,9 @@ create extension if not exists pgcrypto;
 -- Enums
 -- ---------------------------------------------------------------------------
 create type practice_status as enum ('pending_payment', 'active', 'past_due', 'canceled');
-create type practice_plan as enum ('starter', 'growth');
+-- 'enterprise' is never sold through Stripe Checkout — accounts on that
+-- tier are provisioned by hand after a callback_requests lead is closed.
+create type practice_plan as enum ('solo', 'practice', 'multisite', 'enterprise');
 create type billing_interval as enum ('monthly', 'annual');
 create type treatment_status as enum ('in_sequence', 'converted', 'lost', 'future_intent');
 create type consent_category as enum ('quote_followup', 'cross_sell');
@@ -249,6 +251,22 @@ after insert on practices
 for each row execute function seed_practice_defaults();
 
 -- ---------------------------------------------------------------------------
+-- Callback requests (pre-account sales lead capture — no practice_id yet,
+-- since the enquiry comes from a group considering more than 5 practices
+-- and hasn't signed up through Stripe Checkout at all)
+-- ---------------------------------------------------------------------------
+create table callback_requests (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  email text not null,
+  phone text,
+  practice_count integer,
+  message text,
+  status text not null default 'new' check (status in ('new', 'contacted', 'closed')),
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
 -- Row-level security
 -- ---------------------------------------------------------------------------
 alter table practices enable row level security;
@@ -260,6 +278,7 @@ alter table sequence_steps enable row level security;
 alter table message_templates enable row level security;
 alter table visits enable row level security;
 alter table settings enable row level security;
+alter table callback_requests enable row level security;
 
 create policy practices_member_read on practices
   for select using (id = current_practice_id());
@@ -297,3 +316,12 @@ create policy visits_tenant_isolation on visits
 create policy settings_tenant_isolation on settings
   for all using (practice_id = current_practice_id())
   with check (practice_id = current_practice_id());
+
+-- Anyone (including a signed-out visitor) can submit a callback request,
+-- but nobody can read them back through the API — only via the
+-- service-role key, so leads can't be scraped or enumerated by other
+-- callback submitters.
+create policy callback_requests_public_insert on callback_requests
+  for insert
+  to anon, authenticated
+  with check (true);

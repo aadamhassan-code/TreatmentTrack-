@@ -16,9 +16,10 @@ export default function PricingPage() {
           Priced for what it recovers, not per patient record.
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-ink-500">
-          Both plans include the full consent model and audit trail — that
-          isn&rsquo;t a Growth-only feature. Growth adds WhatsApp, unlimited
-          volume, and the cross-sell suggestion engine.
+          Every plan includes the full consent model and audit trail — that
+          isn&rsquo;t a top-tier-only feature. Higher tiers add WhatsApp,
+          unlimited volume, and the cross-sell suggestion engine. Running
+          more than 5 practices? We&rsquo;ll price it with you directly.
         </p>
       </div>
       <div className="mt-12">

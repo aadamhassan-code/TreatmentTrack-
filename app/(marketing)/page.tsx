@@ -19,8 +19,7 @@ export default function LandingPage() {
             Pricing
           </p>
           <h2 className="mt-3 font-display text-3xl font-medium text-ink-900 md:text-4xl">
-            One plan for a single site. One for practices that also want
-            cross-sell.
+            From a single dentist to a five-site group — priced to match.
           </h2>
         </div>
         <div className="mt-12">

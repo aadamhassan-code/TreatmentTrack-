@@ -8,7 +8,13 @@ export type SequenceStep = "day_3" | "day_7" | "day_14" | "day_30";
 
 export type VisitType = "hygiene" | "extraction" | "other";
 
-export type Plan = "starter" | "growth";
+/** Self-serve checkout tiers. "enterprise" is provisioned manually after a
+ *  callback (see callback_requests) and is never offered through Stripe
+ *  Checkout — it exists here only so `practices.plan` can record it. */
+export type Plan = "solo" | "practice" | "multisite" | "enterprise";
+
+/** The subset of Plan actually sold through Stripe Checkout. */
+export type CheckoutPlan = Exclude<Plan, "enterprise">;
 
 export type BillingInterval = "monthly" | "annual";
 

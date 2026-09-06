@@ -1,19 +1,23 @@
 import "server-only";
 import Stripe from "stripe";
-import type { Plan, BillingInterval } from "@/lib/types";
+import type { CheckoutPlan, BillingInterval } from "@/lib/types";
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder", {
   apiVersion: "2026-08-26.dahlia",
 });
 
-export const PRICE_IDS: Record<Plan, Record<BillingInterval, string | undefined>> = {
-  starter: {
-    monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY,
-    annual: process.env.STRIPE_PRICE_STARTER_ANNUAL,
+export const PRICE_IDS: Record<CheckoutPlan, Record<BillingInterval, string | undefined>> = {
+  solo: {
+    monthly: process.env.STRIPE_PRICE_SOLO_MONTHLY,
+    annual: process.env.STRIPE_PRICE_SOLO_ANNUAL,
   },
-  growth: {
-    monthly: process.env.STRIPE_PRICE_GROWTH_MONTHLY,
-    annual: process.env.STRIPE_PRICE_GROWTH_ANNUAL,
+  practice: {
+    monthly: process.env.STRIPE_PRICE_PRACTICE_MONTHLY,
+    annual: process.env.STRIPE_PRICE_PRACTICE_ANNUAL,
+  },
+  multisite: {
+    monthly: process.env.STRIPE_PRICE_MULTISITE_MONTHLY,
+    annual: process.env.STRIPE_PRICE_MULTISITE_ANNUAL,
   },
 };
 
@@ -21,8 +25,9 @@ export function isStripeConfigured(): boolean {
   return Boolean(
     process.env.STRIPE_SECRET_KEY &&
       process.env.STRIPE_WEBHOOK_SECRET &&
-      PRICE_IDS.starter.monthly &&
-      PRICE_IDS.growth.monthly
+      PRICE_IDS.solo.monthly &&
+      PRICE_IDS.practice.monthly &&
+      PRICE_IDS.multisite.monthly
   );
 }
 

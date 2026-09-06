@@ -24,13 +24,32 @@ Tailwind CSS · deployed to Vercel.
    editor, or `supabase db push` if you're using the CLI).
 4. `npm run dev` and visit `http://localhost:3000`.
 
+## Pricing tiers
+
+Three self-serve plans, each with its own Stripe price (monthly and
+annual — see `.env.example`):
+
+| Plan | Price | For |
+| --- | --- | --- |
+| Solo | £99/mo | An individual dentist |
+| Practice | £199/mo | A single practice with a team |
+| Multisite | £399/mo | Up to 5 practice locations |
+
+Beyond 5 practices there's no self-serve checkout at all — `/pricing` and
+the landing page point to `/request-callback`, a public lead form that
+inserts into the `callback_requests` table (RLS allows anonymous insert
+only; nobody can read them back except via the service-role key, e.g. from
+the Supabase dashboard). Once a deal is agreed offline, provision that
+practice by hand with `plan = 'enterprise'`.
+
 ## Billing flow
 
 Signup never creates a usable account on its own — payment has to succeed
 first:
 
-1. `/signup` collects practice name, owner name and email, then creates a
-   Stripe Checkout Session (`/api/stripe/checkout`) and redirects there.
+1. `/signup` collects practice name, owner name and email for one of the
+   three self-serve plans, then creates a Stripe Checkout Session
+   (`/api/stripe/checkout`) and redirects there.
 2. Stripe's `checkout.session.completed` webhook (`/api/stripe/webhook`) is
    the *only* place a `practices` row and its owner account get created —
    never the client-side redirect back to `/signup/success`.

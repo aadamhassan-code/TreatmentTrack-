@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, PRICE_IDS, isStripeConfigured } from "@/lib/stripe";
-import type { Plan, BillingInterval } from "@/lib/types";
+import type { CheckoutPlan, BillingInterval } from "@/lib/types";
+
+const CHECKOUT_PLANS: CheckoutPlan[] = ["solo", "practice", "multisite"];
 
 /**
  * Creates a Stripe Checkout Session. Nothing about the practice is created
@@ -20,15 +22,18 @@ export async function POST(request: NextRequest) {
     practiceName?: string;
     ownerName?: string;
     email?: string;
-    plan?: Plan;
+    plan?: CheckoutPlan;
     interval?: BillingInterval;
   };
 
   if (!practiceName || !ownerName || !email || !plan || !interval) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
-  if (plan !== "starter" && plan !== "growth") {
-    return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+  if (!CHECKOUT_PLANS.includes(plan)) {
+    return NextResponse.json(
+      { error: "Invalid plan — more than 5 practices should go through /request-callback instead." },
+      { status: 400 }
+    );
   }
   if (interval !== "monthly" && interval !== "annual") {
     return NextResponse.json({ error: "Invalid billing interval" }, { status: 400 });
