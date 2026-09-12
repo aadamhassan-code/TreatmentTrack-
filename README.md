@@ -24,6 +24,24 @@ Tailwind CSS · deployed to Vercel.
    editor, or `supabase db push` if you're using the CLI).
 4. `npm run dev` and visit `http://localhost:3000`.
 
+## Testing without Stripe
+
+You don't need a Stripe account to try out the dashboard, Add Treatment,
+Log Visit and Settings pages. Once step 3 above is done (Supabase project
+created, migration applied, `.env.local` filled in with just the three
+Supabase values), run:
+
+```
+npm run seed:dev
+```
+
+This creates a working practice and owner login directly in your Supabase
+project — no Stripe Checkout, no invite email. It prints an email and
+password you can use straight away at `/login`. Safe to re-run any time;
+it reuses the same account instead of duplicating it. Real Stripe/Twilio
+setup is only needed later for testing the actual paid-signup and
+messaging flows end-to-end.
+
 ## Pricing tiers
 
 Three self-serve plans, each with its own Stripe price (monthly and
