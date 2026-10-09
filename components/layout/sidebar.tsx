@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FilePlus2, Stethoscope, Settings } from "lucide-react";
+import { LayoutDashboard, FilePlus2, Upload, Stethoscope, BarChart3, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SignOutButton } from "@/components/layout/sign-out-button";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/treatments/new", label: "Add treatment", icon: FilePlus2 },
+  { href: "/treatments/import", label: "Import CSV", icon: Upload },
   { href: "/visits/new", label: "Log visit", icon: Stethoscope },
+  { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

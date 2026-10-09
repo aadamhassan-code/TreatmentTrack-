@@ -31,3 +31,15 @@ export function renderTemplate(
     .replaceAll("{treatmentType}", vars.treatmentType)
     .replaceAll("{practiceName}", vars.practiceName);
 }
+
+/** "9 Oct 2026" from a "2026-10-09" date or an ISO timestamp. */
+export function formatDate(value: string): string {
+  const d = new Date(value.length === 10 ? `${value}T12:00:00Z` : value);
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" }).format(d);
+}
+
+/** Whole days between a "YYYY-MM-DD" quote date and today (UK time). */
+export function daysSince(dateOnly: string, now: Date = new Date()): number {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(now);
+  return Math.round((Date.parse(today) - Date.parse(dateOnly)) / 86_400_000);
+}

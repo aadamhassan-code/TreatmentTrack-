@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireCurrentPractice } from "@/lib/practice";
 import { scheduleSequence } from "@/lib/sequence";
 import { normalizePhone } from "@/lib/utils";
+import { OPEN_STATUSES, type TreatmentOutcome } from "@/lib/types";
 
 export interface AddTreatmentResult {
   error?: string;
@@ -163,7 +164,11 @@ export async function addTreatment(formData: FormData): Promise<AddTreatmentResu
   }
 
   if (!isFutureIntent) {
-    await scheduleSequence(supabase, practice.id, treatment.id);
+    try {
+      await scheduleSequence(supabase, practice.id, treatment.id);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   revalidatePath("/dashboard");
@@ -176,40 +181,29 @@ function addMonths(date: Date, months: number): Date {
   return result;
 }
 
-export async function markTreatmentBooked(treatmentId: string) {
+const OUTCOMES: readonly TreatmentOutcome[] = ["converted", "declined", "lost"];
+
+/**
+ * Closes a quote as Booked, Declined or Lost. The database stamps the date
+ * and cancels any follow-up messages still waiting to go out.
+ */
+export async function setTreatmentOutcome(treatmentId: string, outcome: TreatmentOutcome) {
+  if (!OUTCOMES.includes(outcome)) throw new Error("Unknown outcome");
   const { practice } = await requireCurrentPractice();
   const supabase = await createClient();
 
-  await supabase
+  const { error } = await supabase
     .from("treatments")
-    .update({ status: "converted", converted_at: new Date().toISOString() })
+    .update({ status: outcome })
     .eq("id", treatmentId)
-    .eq("practice_id", practice.id);
+    .eq("practice_id", practice.id)
+    .in("status", OPEN_STATUSES);
 
-  await supabase
-    .from("sequence_steps")
-    .update({ status: "canceled" })
-    .eq("treatment_id", treatmentId)
-    .eq("status", "pending");
+  if (error) {
+    console.error("Failed to close treatment", error);
+    throw new Error("Couldn't update that quote. Please try again.");
+  }
 
   revalidatePath("/dashboard");
-}
-
-export async function markTreatmentLost(treatmentId: string) {
-  const { practice } = await requireCurrentPractice();
-  const supabase = await createClient();
-
-  await supabase
-    .from("treatments")
-    .update({ status: "lost", lost_at: new Date().toISOString() })
-    .eq("id", treatmentId)
-    .eq("practice_id", practice.id);
-
-  await supabase
-    .from("sequence_steps")
-    .update({ status: "canceled" })
-    .eq("treatment_id", treatmentId)
-    .eq("status", "pending");
-
-  revalidatePath("/dashboard");
+  revalidatePath("/reports");
 }

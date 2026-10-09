@@ -1,4 +1,10 @@
-export type TreatmentStatus = "in_sequence" | "converted" | "lost" | "future_intent";
+/** "converted" is shown to staff as "Booked". */
+export type TreatmentStatus = "in_sequence" | "converted" | "declined" | "lost" | "future_intent";
+
+/** The ways a quote can be closed from the dashboard. */
+export type TreatmentOutcome = "converted" | "declined" | "lost";
+
+export const OPEN_STATUSES: readonly TreatmentStatus[] = ["in_sequence", "future_intent"];
 
 export type ConsentCategory = "quote_followup" | "cross_sell";
 
@@ -53,7 +59,11 @@ export interface Treatment {
   created_at: string;
   updated_at: string;
   converted_at: string | null;
+  declined_at: string | null;
   lost_at: string | null;
+  /** The date the patient was quoted (can be before it was entered, e.g. imports). */
+  quoted_on: string;
+  source: "manual" | "csv_import";
   // joined
   patient?: Patient;
   sequence_steps?: { status: string; error: string | null }[];

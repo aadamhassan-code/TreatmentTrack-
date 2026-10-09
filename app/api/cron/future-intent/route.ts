@@ -56,7 +56,11 @@ export async function GET(request: NextRequest) {
     }
 
     await supabase.from("treatments").update({ status: "in_sequence" }).eq("id", treatment.id);
-    await scheduleSequence(supabase, treatment.practice_id, treatment.id);
+    try {
+      await scheduleSequence(supabase, treatment.practice_id, treatment.id);
+    } catch (e) {
+      console.error(e);
+    }
     activated++;
   }
 

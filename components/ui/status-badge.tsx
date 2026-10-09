@@ -7,8 +7,12 @@ const config: Record<DisplayStatus, { label: string; className: string }> = {
     className: "bg-teal-100 text-teal-800",
   },
   converted: {
-    label: "Converted",
+    label: "Booked",
     className: "bg-gold-200 text-gold-700",
+  },
+  declined: {
+    label: "Declined",
+    className: "bg-ink-900/6 text-ink-700",
   },
   lost: {
     label: "Lost",

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PGlite, type Transaction } from "@electric-sql/pglite";
 
@@ -7,7 +7,7 @@ import { PGlite, type Transaction } from "@electric-sql/pglite";
  * WebAssembly) with the small slice of Supabase our migration relies on:
  * the anon/authenticated/service_role roles, an auth.users table, and
  * auth.uid() reading the signed-in user from the request's JWT claims.
- * Then it runs the real migration file, so these tests exercise the exact
+ * Then it runs the real migration files in order, so these tests exercise the exact
  * triggers and row-level security policies that run in production.
  */
 const SUPABASE_STUB = `
@@ -33,10 +33,13 @@ export async function createTestDb(): Promise<PGlite> {
   const db = new PGlite();
   await db.exec(SUPABASE_STUB);
   const migrationsDir = join(__dirname, "../../supabase/migrations");
-  const migration = readFileSync(join(migrationsDir, "0001_init.sql"), "utf8")
-    // gen_random_uuid() is built into Postgres 13+; PGlite doesn't ship pgcrypto.
-    .replace(/create extension if not exists pgcrypto;/i, "");
-  await db.exec(migration);
+  const files = readdirSync(migrationsDir).filter((f) => f.endsWith(".sql")).sort();
+  for (const file of files) {
+    const migration = readFileSync(join(migrationsDir, file), "utf8")
+      // gen_random_uuid() is built into Postgres 13+; PGlite doesn't ship pgcrypto.
+      .replace(/create extension if not exists pgcrypto;/i, "");
+    await db.exec(migration);
+  }
   await db.exec(GRANTS);
   return db;
 }
