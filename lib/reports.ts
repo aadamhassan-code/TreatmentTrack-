@@ -1,25 +1,26 @@
 import type { TreatmentStatus } from "@/lib/types";
+import { ukDate } from "@/lib/utils";
 
 export type ReportPeriod = "month" | "90d" | "12m" | "all";
 
-export const REPORT_PERIODS: { value: ReportPeriod; label: string }[] = [
-  { value: "month", label: "This month" },
-  { value: "90d", label: "Last 90 days" },
-  { value: "12m", label: "Last 12 months" },
-  { value: "all", label: "All time" },
+export const REPORT_PERIODS: { value: ReportPeriod; label: string; phrase: string }[] = [
+  { value: "month", label: "This month", phrase: "this month" },
+  { value: "90d", label: "Last 90 days", phrase: "in the last 90 days" },
+  { value: "12m", label: "Last 12 months", phrase: "in the last 12 months" },
+  { value: "all", label: "All time", phrase: "since you started" },
 ];
 
 export function parsePeriod(raw: unknown): ReportPeriod {
   return REPORT_PERIODS.some((p) => p.value === raw) ? (raw as ReportPeriod) : "month";
 }
 
-/** First day of the period as "YYYY-MM-DD", or null for all time. */
-export function periodStart(period: ReportPeriod, now: Date = new Date()): string | null {
-  const d = new Date(now);
+/** First day of the period as a UK "YYYY-MM-DD" date, or null for all time. */
+export function periodStart(period: ReportPeriod, today: string = ukDate()): string | null {
   if (period === "all") return null;
-  if (period === "month") d.setDate(1);
-  else if (period === "90d") d.setDate(d.getDate() - 89);
-  else d.setFullYear(d.getFullYear() - 1, d.getMonth(), d.getDate() + 1);
+  if (period === "month") return `${today.slice(0, 8)}01`;
+  const d = new Date(`${today}T00:00:00Z`);
+  if (period === "90d") d.setUTCDate(d.getUTCDate() - 89);
+  else d.setUTCFullYear(d.getUTCFullYear() - 1, d.getUTCMonth(), d.getUTCDate() + 1);
   return d.toISOString().slice(0, 10);
 }
 
@@ -80,7 +81,7 @@ export function buildReport(treatments: ReportTreatment[], from: string | null):
   const byType = new Map<string, TreatmentTypeRow>();
 
   for (const t of treatments) {
-    if (t.status === "converted" && t.converted_at && (!from || t.converted_at.slice(0, 10) >= from)) {
+    if (t.status === "converted" && t.converted_at && (!from || ukDate(t.converted_at) >= from)) {
       add(report.recovered, t.value_pence);
     }
 

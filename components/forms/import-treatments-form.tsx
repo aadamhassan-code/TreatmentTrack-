@@ -6,13 +6,9 @@ import { AlertTriangle, CheckCircle2, Download } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
-import { formatDate, formatGBP } from "@/lib/utils";
+import { formatDate, formatGBP, ukDate } from "@/lib/utils";
 import { MAX_IMPORT_ROWS, MAX_QUOTE_AGE_MONTHS, TEMPLATE_CSV, parseImport } from "@/lib/import";
 import { importTreatments, type ImportResult } from "@/lib/actions/import";
-
-function todayInUk() {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date());
-}
 
 export function ImportTreatmentsForm() {
   const [fileName, setFileName] = useState<string | null>(null);
@@ -21,7 +17,7 @@ export function ImportTreatmentsForm() {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const preview = useMemo(() => (csvText == null ? null : parseImport(csvText, todayInUk())), [csvText]);
+  const preview = useMemo(() => (csvText == null ? null : parseImport(csvText, ukDate())), [csvText]);
   const ready = preview?.rows.filter((r) => r.errors.length === 0) ?? [];
   const problems = preview?.rows.filter((r) => r.errors.length > 0) ?? [];
   const readyValue = ready.reduce((sum, r) => sum + r.valuePence, 0);
@@ -65,8 +61,9 @@ export function ImportTreatmentsForm() {
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="text-sm">
             <p className="font-semibold">
-              Imported {result.imported} quote{result.imported === 1 ? "" : "s"} worth{" "}
-              {formatGBP(result.importedValuePence ?? 0)}.
+              {result.imported
+                ? `Imported ${result.imported} quote${result.imported === 1 ? "" : "s"} worth ${formatGBP(result.importedValuePence ?? 0)}.`
+                : "Nothing new to import."}
             </p>
             {(result.skipped?.length ?? 0) > 0 && (
               <>

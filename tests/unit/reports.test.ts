@@ -31,6 +31,14 @@ describe("buildReport", () => {
     expect(r.bookingRate).toBe(0.25);
   });
 
+  test("a booking just after midnight UK time on the 1st counts in the new month", () => {
+    const r = buildReport(
+      [t({ status: "converted", quoted_on: "2026-09-01", converted_at: "2026-09-30T23:30:00Z" })],
+      "2026-10-01"
+    );
+    expect(r.recovered.count).toBe(1);
+  });
+
   test("recovered counts everything booked in the period, whenever it was quoted", () => {
     expect(buildReport(rows, "2026-10-01").recovered).toEqual({ count: 2, valuePence: 2900_00 });
   });
@@ -53,14 +61,14 @@ describe("buildReport", () => {
 });
 
 describe("report periods", () => {
-  const now = new Date("2026-10-09T12:00:00Z");
+  const today = "2026-10-09";
   test.each([
     ["month", "2026-10-01"],
     ["90d", "2026-07-12"],
     ["12m", "2025-10-10"],
     ["all", null],
   ] as const)("%s starts on %s", (period, start) => {
-    expect(periodStart(period, now)).toBe(start);
+    expect(periodStart(period, today)).toBe(start);
   });
 
   test("unknown period falls back to this month", () => {

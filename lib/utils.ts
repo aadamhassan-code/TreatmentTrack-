@@ -38,8 +38,12 @@ export function formatDate(value: string): string {
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" }).format(d);
 }
 
+/** The UK calendar date ("YYYY-MM-DD") of a moment — today by default. */
+export function ukDate(at: Date | string = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date(at));
+}
+
 /** Whole days between a "YYYY-MM-DD" quote date and today (UK time). */
 export function daysSince(dateOnly: string, now: Date = new Date()): number {
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(now);
-  return Math.round((Date.parse(today) - Date.parse(dateOnly)) / 86_400_000);
+  return Math.round((Date.parse(ukDate(now)) - Date.parse(dateOnly)) / 86_400_000);
 }

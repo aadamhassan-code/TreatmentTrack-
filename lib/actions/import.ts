@@ -6,6 +6,7 @@ import { requireCurrentPractice } from "@/lib/practice";
 import { scheduleSequence } from "@/lib/sequence";
 import { parseImport, type ImportRow } from "@/lib/import";
 import { OPEN_STATUSES } from "@/lib/types";
+import { ukDate } from "@/lib/utils";
 
 export interface ImportResult {
   error?: string;
@@ -21,10 +22,6 @@ function chunks<T>(items: T[], size = CHUNK): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
   return out;
-}
-
-function todayInUk(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date());
 }
 
 /**
@@ -47,7 +44,7 @@ export async function importTreatments(csvText: string, optOutConfirmed: boolean
     return { error: "That file is too large. Please split it into smaller files of up to 500 quotes." };
   }
 
-  const today = todayInUk();
+  const today = ukDate();
   const { fileErrors, rows } = parseImport(csvText, today);
   if (fileErrors.length) return { error: fileErrors[0] };
 
@@ -123,7 +120,7 @@ export async function importTreatments(csvText: string, optOutConfirmed: boolean
   }
 
   if (toImport.length === 0) {
-    return { imported: 0, importedValuePence: 0, skipped };
+    return { imported: 0, importedValuePence: 0, skipped: skipped.sort((a, b) => a.line - b.line) };
   }
 
   const fail = (what: string, e: { message: string }) => {
@@ -191,6 +188,6 @@ export async function importTreatments(csvText: string, optOutConfirmed: boolean
   return {
     imported: records.length,
     importedValuePence: records.reduce((sum, r) => sum + r.row.valuePence, 0),
-    skipped,
+    skipped: skipped.sort((a, b) => a.line - b.line),
   };
 }

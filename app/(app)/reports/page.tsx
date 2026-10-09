@@ -67,7 +67,7 @@ export default async function ReportsPage({
   }
 
   const report = buildReport(treatments, from);
-  const periodLabel = REPORT_PERIODS.find((p) => p.value === period)!.label.toLowerCase();
+  const periodLabel = REPORT_PERIODS.find((p) => p.value === period)!.phrase;
 
   const outcomes: { label: string; tally: Tally; className: string }[] = [
     { label: "Booked", tally: report.booked, className: "bg-gold-500" },

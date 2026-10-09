@@ -1,7 +1,8 @@
 import { LedgerStat } from "@/components/ui/ledger-stat";
 import { TreatmentsTable } from "@/components/dashboard/treatments-table";
 import { LinkButton } from "@/components/ui/button";
-import { formatGBP } from "@/lib/utils";
+import { formatGBP, ukDate } from "@/lib/utils";
+import { periodStart } from "@/lib/reports";
 import { requireCurrentPractice } from "@/lib/practice";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAll } from "@/lib/supabase/fetch-all";
@@ -11,11 +12,13 @@ export default async function DashboardPage() {
   const { practice } = await requireCurrentPractice();
   const supabase = await createClient();
 
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
+  // The 1st of this month in UK time. The query starts a day earlier so no
+  // UK-time booking is missed; the exact cut-off is applied below.
+  const monthStart = periodStart("month")!;
+  const queryFrom = new Date(`${monthStart}T00:00:00Z`);
+  queryFrom.setUTCDate(queryFrom.getUTCDate() - 1);
 
-  const [open, bookedThisMonth, { data: recentlyClosed }] = await Promise.all([
+  const [open, bookedRecently, { data: recentlyClosed }] = await Promise.all([
     // Open quotes, biggest first — the ones most worth a phone call today.
     fetchAll<Treatment>((from, to) =>
       supabase
@@ -28,13 +31,13 @@ export default async function DashboardPage() {
         .order("id")
         .range(from, to)
     ),
-    fetchAll<{ value_pence: number }>((from, to) =>
+    fetchAll<{ value_pence: number; converted_at: string }>((from, to) =>
       supabase
         .from("treatments")
-        .select("value_pence")
+        .select("value_pence, converted_at")
         .eq("practice_id", practice.id)
         .eq("status", "converted")
-        .gte("converted_at", startOfMonth.toISOString())
+        .gte("converted_at", queryFrom.toISOString())
         .order("id")
         .range(from, to)
     ),
@@ -47,6 +50,7 @@ export default async function DashboardPage() {
       .limit(10),
   ]);
 
+  const bookedThisMonth = bookedRecently.filter((t) => ukDate(t.converted_at) >= monthStart);
   const pipelinePence = open.reduce((sum, t) => sum + t.value_pence, 0);
   const recoveredPence = bookedThisMonth.reduce((sum, t) => sum + t.value_pence, 0);
 

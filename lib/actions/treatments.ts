@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireCurrentPractice } from "@/lib/practice";
 import { scheduleSequence } from "@/lib/sequence";
-import { normalizePhone } from "@/lib/utils";
+import { normalizePhone, ukDate } from "@/lib/utils";
 import { OPEN_STATUSES, type TreatmentOutcome } from "@/lib/types";
 
 export interface AddTreatmentResult {
@@ -148,6 +148,7 @@ export async function addTreatment(formData: FormData): Promise<AddTreatmentResu
       treatment_type: treatmentType,
       value_pence: Math.round(valuePounds * 100),
       status: isFutureIntent ? "future_intent" : "in_sequence",
+      quoted_on: ukDate(),
       quote_followup_consent_id: quoteConsent.id,
       future_intent_remind_at: futureIntentRemindAt,
       created_by: userId,
