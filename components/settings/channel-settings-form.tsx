@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
 import { updateChannelSettings } from "@/lib/actions/settings";
@@ -17,9 +17,21 @@ export function ChannelSettingsForm({
   const [whatsapp, setWhatsapp] = useState(settings.whatsapp_enabled);
   const [email, setEmail] = useState(settings.email_enabled);
   const [crossSell, setCrossSell] = useState(settings.cross_sell_enabled);
+  const [saving, startTransition] = useTransition();
+  const [saved, setSaved] = useState(false);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    setSaved(false);
+    startTransition(async () => {
+      await updateChannelSettings(formData);
+      setSaved(true);
+    });
+  }
 
   return (
-    <form action={updateChannelSettings} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <Toggle checked={sms} onChange={setSms} label="SMS follow-up" />
       <input type="hidden" name="sms_enabled" value={sms ? "on" : ""} />
 
@@ -48,9 +60,12 @@ export function ChannelSettingsForm({
         <input type="hidden" name="cross_sell_enabled" value={crossSell ? "on" : ""} />
       </div>
 
-      <Button type="submit" size="sm">
-        Save channel settings
-      </Button>
+      <div className="flex items-center gap-3">
+        <Button type="submit" size="sm" disabled={saving}>
+          {saving ? "Saving…" : "Save channel settings"}
+        </Button>
+        {saved && !saving && <span className="text-sm text-teal-700">Saved</span>}
+      </div>
     </form>
   );
 }

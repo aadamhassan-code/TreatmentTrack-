@@ -2,7 +2,9 @@ import "server-only";
 import Stripe from "stripe";
 import type { CheckoutPlan, BillingInterval } from "@/lib/types";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder", {
+// `||` not `??`: a blank STRIPE_SECRET_KEY= line (as copied from .env.example)
+// must fall back too, or the Stripe SDK throws at build time.
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
   apiVersion: "2026-08-26.dahlia",
 });
 

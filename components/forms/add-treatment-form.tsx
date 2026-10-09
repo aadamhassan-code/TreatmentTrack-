@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
@@ -34,9 +34,19 @@ export function AddTreatmentForm() {
   const [quoteFollowupOffered, setQuoteFollowupOffered] = useState(false);
   const [crossSellConsent, setCrossSellConsent] = useState(false);
   const [futureIntent, setFutureIntent] = useState("");
+  const [reconsent, setReconsent] = useState(false);
+  const [, startTransition] = useTransition();
+
+  // Submitting via onSubmit (not the form's `action` prop) stops React
+  // clearing everything staff typed when the server sends back an error.
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransition(() => formAction(formData));
+  }
 
   return (
-    <form action={formAction} className="max-w-2xl space-y-6">
+    <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
       <div>
         <h1 className="font-display text-3xl font-medium text-ink-900">
           Add a declined quote
@@ -74,6 +84,19 @@ export function AddTreatmentForm() {
                 placeholder="07700 900123"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-ink-900" htmlFor="email">
+              Email <span className="font-normal text-ink-500">(optional — needed for email follow-ups)</span>
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              className="mt-1.5 w-full rounded-lg border border-ink-900/15 bg-cream-0 px-3.5 py-2.5 text-sm focus:border-teal-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
+              placeholder="fatima@example.com"
+            />
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
@@ -182,6 +205,20 @@ export function AddTreatmentForm() {
           {state.error}
         </p>
       )}
+
+      {state?.needsReconsent && (
+        <Card>
+          <CardBody>
+            <Toggle
+              checked={reconsent}
+              onChange={setReconsent}
+              label="The patient has asked us to contact them again about this quote"
+              description="This is recorded in their consent history with your name and today's date. If they haven't asked, don't add this quote."
+            />
+          </CardBody>
+        </Card>
+      )}
+      <input type="hidden" name="reconsent" value={reconsent ? "on" : ""} />
 
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? "Saving…" : "Add treatment"}

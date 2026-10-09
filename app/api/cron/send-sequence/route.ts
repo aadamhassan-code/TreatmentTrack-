@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAuthorizedCronRequest } from "@/lib/cron-auth";
 import { getProvider, ensureOptOutText } from "@/lib/messaging";
 import { renderTemplate } from "@/lib/utils";
+import { decideSend } from "@/lib/send-decision";
 import type { Channel, SequenceStep } from "@/lib/types";
 
 interface DueStep {
@@ -12,9 +13,10 @@ interface DueStep {
   channel: Channel;
   treatment: {
     treatment_type: string;
+    status: string;
     patient: { full_name: string; phone: string; email: string | null; opted_out_at: string | null };
   } | null;
-  practice: { name: string } | null;
+  practice: { name: string; status: string } | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -27,7 +29,7 @@ export async function GET(request: NextRequest) {
   const { data: dueSteps, error } = await supabase
     .from("sequence_steps")
     .select(
-      "id, practice_id, step, channel, treatment:treatments(treatment_type, patient:patients(full_name, phone, email, opted_out_at)), practice:practices(name)"
+      "id, practice_id, step, channel, treatment:treatments(treatment_type, status, patient:patients(full_name, phone, email, opted_out_at)), practice:practices(name, status)"
     )
     .eq("status", "pending")
     .lte("scheduled_for", new Date().toISOString());
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
 
   const steps = (dueSteps ?? []) as unknown as DueStep[];
   if (steps.length === 0) {
-    return NextResponse.json({ processed: 0, sent: 0, failed: 0, skipped: 0 });
+    return NextResponse.json({ processed: 0, sent: 0, failed: 0, skipped: 0, canceled: 0 });
   }
 
   const practiceIds = Array.from(new Set(steps.map((s) => s.practice_id)));
@@ -54,61 +56,48 @@ export async function GET(request: NextRequest) {
   let sent = 0;
   let failed = 0;
   let skipped = 0;
+  let canceled = 0;
 
   for (const step of steps) {
-    const patient = step.treatment?.patient;
-    const practiceName = step.practice?.name;
-    const treatmentType = step.treatment?.treatment_type;
+    const template = templateMap.get(`${step.practice_id}:${step.step}:${step.channel}`);
+    const decision = decideSend({
+      channel: step.channel,
+      practiceStatus: step.practice?.status ?? null,
+      treatmentStatus: step.treatment?.status ?? null,
+      patient: step.treatment?.patient ?? null,
+      hasTemplate: Boolean(template),
+    });
 
-    if (!patient || !practiceName || !treatmentType) {
-      await supabase
-        .from("sequence_steps")
-        .update({ status: "failed", error: "Missing related treatment/patient data" })
-        .eq("id", step.id);
-      failed++;
-      continue;
-    }
-
-    // Opt-out (or any withdrawal of consent) stops future messages
-    // immediately — checked again here, at send time, not just when the
-    // sequence was scheduled.
-    if (patient.opted_out_at) {
-      await supabase
-        .from("sequence_steps")
-        .update({ status: "skipped_no_consent" })
-        .eq("id", step.id);
+    if (decision.action === "skip_no_consent") {
+      await supabase.from("sequence_steps").update({ status: "skipped_no_consent" }).eq("id", step.id);
       skipped++;
       continue;
     }
-
-    const template = templateMap.get(`${step.practice_id}:${step.step}:${step.channel}`);
-    if (!template) {
+    if (decision.action === "cancel") {
       await supabase
         .from("sequence_steps")
-        .update({ status: "failed", error: "No template configured for this step/channel" })
+        .update({ status: "canceled", error: decision.reason })
+        .eq("id", step.id);
+      canceled++;
+      continue;
+    }
+    if (decision.action === "fail") {
+      await supabase
+        .from("sequence_steps")
+        .update({ status: "failed", error: decision.reason })
         .eq("id", step.id);
       failed++;
       continue;
     }
 
-    const to = step.channel === "email" ? patient.email : patient.phone;
-    if (!to) {
-      await supabase
-        .from("sequence_steps")
-        .update({ status: "failed", error: `No ${step.channel} contact on file` })
-        .eq("id", step.id);
-      failed++;
-      continue;
-    }
-
-    const rendered = renderTemplate(template, {
-      patientName: patient.full_name,
-      treatmentType,
-      practiceName,
+    const rendered = renderTemplate(template!, {
+      patientName: step.treatment!.patient.full_name,
+      treatmentType: step.treatment!.treatment_type,
+      practiceName: step.practice!.name,
     });
     const body = ensureOptOutText(rendered, step.channel);
 
-    const result = await getProvider(step.channel).send({ to, body });
+    const result = await getProvider(step.channel).send({ to: decision.to, body });
 
     await supabase
       .from("sequence_steps")
@@ -124,5 +113,5 @@ export async function GET(request: NextRequest) {
     else failed++;
   }
 
-  return NextResponse.json({ processed: steps.length, sent, failed, skipped });
+  return NextResponse.json({ processed: steps.length, sent, failed, skipped, canceled });
 }

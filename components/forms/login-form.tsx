@@ -1,36 +1,65 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { parseAuthHash } from "@/lib/auth-hash";
+
+const subscribeToHash = (onChange: () => void) => {
+  window.addEventListener("hashchange", onChange);
+  return () => window.removeEventListener("hashchange", onChange);
+};
+const readHash = () => window.location.hash;
 
 export function LoginForm() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
-  const isInviteFlow = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const hash = window.location.hash;
-    return hash.includes("type=invite") || hash.includes("type=recovery");
-  }, []);
+  // Invite and password-reset links carry login tokens in the URL hash.
+  // Our browser client uses the PKCE flow, which deliberately ignores that
+  // style of link, so we read the tokens ourselves and start the session.
+  // useSyncExternalStore reads the hash only in the browser (the server
+  // render sees ""), which keeps server and browser HTML in agreement.
+  const hash = useSyncExternalStore(subscribeToHash, readHash, () => "");
+  const authHash = useMemo(() => parseAuthHash(hash), [hash]);
 
-  const [mode, setMode] = useState<"loading" | "set-password" | "sign-in">(() =>
-    isInviteFlow ? "loading" : "sign-in"
-  );
+  // null = not tried yet; "ok" = session started; otherwise an error message.
+  const [linkResult, setLinkResult] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const mode: "loading" | "set-password" | "sign-in" =
+    linkResult === "ok"
+      ? "set-password"
+      : authHash?.kind === "tokens" && linkResult === null
+        ? "loading"
+        : "sign-in";
+
+  const linkError =
+    linkResult && linkResult !== "ok"
+      ? `That link has expired or was already used: ${linkResult}`
+      : authHash?.kind === "error"
+        ? `That link didn't work: ${authHash.error}. Ask for a new invite or reset your password.`
+        : null;
+
   useEffect(() => {
-    if (!isInviteFlow) return;
-    // supabase-js detects the token in the URL hash on load and sets the
-    // session; once that's done we ask for a password instead of signing
-    // in with one.
-    const timeout = setTimeout(() => setMode("set-password"), 300);
-    return () => clearTimeout(timeout);
-  }, [isInviteFlow]);
+    if (authHash?.kind !== "tokens") return;
+    let canceled = false;
+    supabase.auth
+      .setSession({ access_token: authHash.accessToken, refresh_token: authHash.refreshToken })
+      .then(({ error }) => {
+        if (canceled) return;
+        // Don't leave the tokens sitting in the address bar / history.
+        window.history.replaceState(null, "", window.location.pathname);
+        setLinkResult(error ? error.message : "ok");
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [authHash, supabase]);
 
   async function handleSetPassword(e: React.FormEvent) {
     e.preventDefault();
@@ -54,7 +83,11 @@ export function LoginForm() {
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setError(error.message);
+      setError(
+        error.message === "Failed to fetch"
+          ? "Couldn't reach the login service. Check your internet connection and try again."
+          : error.message
+      );
       setSubmitting(false);
       return;
     }
@@ -135,8 +168,10 @@ export function LoginForm() {
             className="mt-1.5 w-full rounded-lg border border-ink-900/15 bg-cream-0 px-3.5 py-2.5 text-sm focus:border-teal-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
           />
         </div>
-        {error && (
-          <p className="rounded-lg bg-clay-100 px-4 py-3 text-sm text-clay-700">{error}</p>
+        {(error ?? linkError) && (
+          <p className="rounded-lg bg-clay-100 px-4 py-3 text-sm text-clay-700">
+            {error ?? linkError}
+          </p>
         )}
         <Button type="submit" disabled={submitting} className="w-full" size="lg">
           {submitting ? "Signing in…" : "Log in"}

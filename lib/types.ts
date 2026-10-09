@@ -24,6 +24,7 @@ export interface Patient {
   full_name: string;
   phone: string;
   email: string | null;
+  opted_out_at: string | null;
   created_at: string;
 }
 
@@ -33,8 +34,9 @@ export interface Consent {
   patient_id: string;
   category: ConsentCategory;
   granted: boolean;
-  source_treatment_id: string | null;
-  captured_by: string;
+  /** "staff" = recorded by a staff member; "patient_reply" = e.g. the patient replied STOP. */
+  source: "staff" | "patient_reply";
+  captured_by: string | null;
   captured_at: string;
   notes: string | null;
 }

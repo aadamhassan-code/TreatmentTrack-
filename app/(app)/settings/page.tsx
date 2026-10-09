@@ -63,7 +63,7 @@ export default async function SettingsPage() {
               name="Stripe billing"
               description="Handles your subscription and plan changes."
               connected={isStripeConfigured()}
-              hint="Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and the four price IDs."
+              hint="Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and the six price IDs (three plans × monthly/annual)."
             />
           </CardBody>
         </Card>

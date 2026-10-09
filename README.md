@@ -42,6 +42,19 @@ it reuses the same account instead of duplicating it. Real Stripe/Twilio
 setup is only needed later for testing the actual paid-signup and
 messaging flows end-to-end.
 
+## Automated tests
+
+```
+npm test
+```
+
+Runs in a few seconds with nothing to set up. The database tests
+(`tests/db/`) load the real migration into PGlite — an in-memory copy of
+Postgres — and check the consent rules, STOP/opt-out handling and
+row-level security (each practice only seeing its own data) against it.
+The unit tests (`tests/unit/`) cover the send-time checks, opt-out
+keywords and phone/link parsing.
+
 ## Pricing tiers
 
 Three self-serve plans, each with its own Stripe price (monthly and
@@ -91,9 +104,12 @@ Two cron routes, intended to be triggered by Vercel Cron (see
   into an active sequence once their date arrives.
 
 Inbound STOP replies are handled by `/api/webhooks/twilio/inbound`, which
-should be set as the "A message comes in" webhook on your Twilio number —
-it withdraws consent and cancels every pending sequence step for that
-patient immediately.
+should be set as the "A message comes in" webhook on your Twilio number.
+Every request must carry a valid Twilio signature (checked against
+`TWILIO_AUTH_TOKEN` and `NEXT_PUBLIC_SITE_URL`, or `TWILIO_WEBHOOK_URL` if
+set). A STOP reply marks the patient opted out, appends a withdrawal to
+their consent history and cancels every pending message, in one database
+transaction (`record_patient_opt_out`).
 
 ## Compliance model
 

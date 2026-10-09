@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   const { data: due, error } = await supabase
     .from("treatments")
-    .select("id, practice_id, patient:patients(opted_out_at)")
+    .select("id, practice_id, patient:patients(opted_out_at), practice:practices(status)")
     .eq("status", "future_intent")
     .lte("future_intent_remind_at", today);
 
@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
     id: string;
     practice_id: string;
     patient: { opted_out_at: string | null } | null;
+    practice: { status: string } | null;
   }[];
 
   let activated = 0;
@@ -38,7 +39,18 @@ export async function GET(request: NextRequest) {
 
   for (const treatment of treatments) {
     if (treatment.patient?.opted_out_at) {
-      await supabase.from("treatments").update({ status: "lost" }).eq("id", treatment.id);
+      await supabase
+        .from("treatments")
+        .update({ status: "lost", lost_at: new Date().toISOString() })
+        .eq("id", treatment.id);
+      skipped++;
+      continue;
+    }
+
+    // Leave it waiting (not lost) if the practice's subscription has
+    // lapsed — it'll start once they're active again.
+    const practiceStatus = treatment.practice?.status;
+    if (practiceStatus !== "active" && practiceStatus !== "past_due") {
       skipped++;
       continue;
     }

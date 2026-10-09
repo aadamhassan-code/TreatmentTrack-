@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
@@ -14,6 +14,15 @@ export function RequestCallbackForm() {
     async (_prev, formData) => requestCallback(formData),
     {}
   );
+  const [, startTransition] = useTransition();
+
+  // Submit via onSubmit rather than the form's `action` prop so React
+  // doesn't clear what was typed when the server returns an error.
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransition(() => formAction(formData));
+  }
 
   if (state?.success) {
     return (
@@ -33,7 +42,7 @@ export function RequestCallbackForm() {
   }
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <Card>
         <CardBody className="space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">

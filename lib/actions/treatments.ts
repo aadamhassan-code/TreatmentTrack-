@@ -9,7 +9,11 @@ import { normalizePhone } from "@/lib/utils";
 
 export interface AddTreatmentResult {
   error?: string;
+  /** The patient previously opted out; staff must confirm they've asked to hear from us again. */
+  needsReconsent?: boolean;
 }
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function addTreatment(formData: FormData): Promise<AddTreatmentResult> {
   const { userId, practice } = await requireCurrentPractice();
@@ -17,6 +21,8 @@ export async function addTreatment(formData: FormData): Promise<AddTreatmentResu
 
   const patientName = String(formData.get("patientName") ?? "").trim();
   const phone = normalizePhone(String(formData.get("phone") ?? "").trim());
+  const email = String(formData.get("email") ?? "").trim().toLowerCase() || null;
+  const reconsent = formData.get("reconsent") === "on";
   const treatmentType = String(formData.get("treatmentType") ?? "").trim();
   const valuePounds = Number(formData.get("value") ?? 0);
   const quoteFollowupOffered = formData.get("quoteFollowupOffered") === "on";
@@ -27,6 +33,9 @@ export async function addTreatment(formData: FormData): Promise<AddTreatmentResu
 
   if (!patientName || !phone || !treatmentType || !valuePounds || valuePounds <= 0) {
     return { error: "Please fill in patient name, phone, treatment type and a value." };
+  }
+  if (email && !EMAIL_RE.test(email)) {
+    return { error: "That email address doesn't look right — please check it, or leave it blank." };
   }
 
   // The PECR soft opt-in rule: an automated sequence can only ever be set up
@@ -44,17 +53,33 @@ export async function addTreatment(formData: FormData): Promise<AddTreatmentResu
   // Find-or-create the patient by phone within this practice.
   const { data: existingPatient } = await supabase
     .from("patients")
-    .select("id")
+    .select("id, email, opted_out_at")
     .eq("practice_id", practice.id)
     .eq("phone", phone)
     .maybeSingle();
 
   let patientId = existingPatient?.id as string | undefined;
 
+  // A patient who replied STOP can only be followed up again if they've
+  // since asked the practice to contact them. Staff must say so explicitly;
+  // that request is then recorded as fresh consent (and the database
+  // refuses to clear an opt-out without it).
+  if (existingPatient?.opted_out_at && !reconsent) {
+    return {
+      needsReconsent: true,
+      error:
+        "This patient opted out of follow-up messages. Only continue if they've since asked you to contact them again.",
+    };
+  }
+
+  if (existingPatient && email && !existingPatient.email) {
+    await supabase.from("patients").update({ email }).eq("id", existingPatient.id);
+  }
+
   if (!patientId) {
     const { data: newPatient, error: patientError } = await supabase
       .from("patients")
-      .insert({ practice_id: practice.id, full_name: patientName, phone })
+      .insert({ practice_id: practice.id, full_name: patientName, phone, email })
       .select("id")
       .single();
 
@@ -73,13 +98,26 @@ export async function addTreatment(formData: FormData): Promise<AddTreatmentResu
       category: "quote_followup",
       granted: true,
       captured_by: userId,
-      notes: `Opt-out offered for follow-up on ${treatmentType} quote.`,
+      notes: existingPatient?.opted_out_at
+        ? `Patient previously opted out and has asked to hear from us again about a ${treatmentType} quote. Opt-out offered.`
+        : `Opt-out offered for follow-up on ${treatmentType} quote.`,
     })
     .select("id")
     .single();
 
   if (quoteConsentError || !quoteConsent) {
     return { error: "Couldn't record quote-followup consent. Please try again." };
+  }
+
+  if (existingPatient?.opted_out_at) {
+    const { error: clearError } = await supabase
+      .from("patients")
+      .update({ opted_out_at: null })
+      .eq("id", existingPatient.id);
+    if (clearError) {
+      console.error("Failed to clear opt-out", clearError);
+      return { error: "Couldn't update the patient's opt-out status. Please try again." };
+    }
   }
 
   // Category (b): cross-sell consent — entirely separate, never inferred
@@ -117,6 +155,7 @@ export async function addTreatment(formData: FormData): Promise<AddTreatmentResu
     .single();
 
   if (treatmentError || !treatment) {
+    console.error("Failed to create treatment", treatmentError);
     return {
       error:
         "Couldn't create the treatment. This usually means the consent above wasn't recorded correctly — please try again.",

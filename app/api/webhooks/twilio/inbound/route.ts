@@ -1,52 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
+import twilio from "twilio";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone } from "@/lib/utils";
-
-const STOP_KEYWORDS = new Set(["stop", "stopall", "unsubscribe", "cancel", "end", "quit"]);
+import { isStopMessage } from "@/lib/opt-out";
 
 const TWIML_EMPTY = `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`;
 
+function twiml(status = 200) {
+  return new NextResponse(TWIML_EMPTY, { status, headers: { "Content-Type": "text/xml" } });
+}
+
+/**
+ * The public URL Twilio was configured to call. Twilio signs the exact URL
+ * it requested, so this must match what's set in the Twilio console.
+ */
+function webhookUrl(): string {
+  if (process.env.TWILIO_WEBHOOK_URL) return process.env.TWILIO_WEBHOOK_URL;
+  const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  return `${site.replace(/\/$/, "")}/api/webhooks/twilio/inbound`;
+}
+
 /**
  * Point this at Twilio's "A message comes in" webhook for your SMS/WhatsApp
- * number. An inbound STOP-family keyword withdraws consent immediately:
- * every pending sequence step for that patient is canceled before this
- * request even returns, and no further messages will be scheduled for
- * them until they're re-added with fresh consent.
+ * number. Every request must carry a valid Twilio signature, so nobody
+ * else can post fake replies. An inbound STOP-family reply withdraws
+ * consent immediately: the patient is marked opted out, the withdrawal is
+ * appended to their consent history, and every pending message is
+ * canceled — all in one database transaction (record_patient_opt_out).
  */
 export async function POST(request: NextRequest) {
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!authToken) {
+    return NextResponse.json({ error: "Twilio is not configured" }, { status: 503 });
+  }
+
   const form = await request.formData();
-  const from = String(form.get("From") ?? "");
-  const body = String(form.get("Body") ?? "").trim().toLowerCase();
+  const params: Record<string, string> = {};
+  form.forEach((value, key) => {
+    params[key] = String(value);
+  });
 
-  if (!from || !STOP_KEYWORDS.has(body)) {
-    return new NextResponse(TWIML_EMPTY, { headers: { "Content-Type": "text/xml" } });
+  const signature = request.headers.get("x-twilio-signature") ?? "";
+  if (!twilio.validateRequest(authToken, signature, webhookUrl(), params)) {
+    return NextResponse.json({ error: "Invalid Twilio signature" }, { status: 403 });
   }
 
-  const supabase = createAdminClient();
+  const from = params.From ?? "";
+  if (!from || !isStopMessage(params.Body ?? "")) {
+    return twiml();
+  }
+
   const phone = normalizePhone(from.replace(/^whatsapp:/i, ""));
+  const supabase = createAdminClient();
+  const { error } = await supabase.rpc("record_patient_opt_out", { p_phone: phone });
 
-  const { data: patients } = await supabase.from("patients").select("id").eq("phone", phone);
-
-  for (const patient of patients ?? []) {
-    await supabase
-      .from("patients")
-      .update({ opted_out_at: new Date().toISOString() })
-      .eq("id", patient.id);
-
-    const { data: treatments } = await supabase
-      .from("treatments")
-      .select("id")
-      .eq("patient_id", patient.id);
-
-    const treatmentIds = (treatments ?? []).map((t) => t.id);
-    if (treatmentIds.length > 0) {
-      await supabase
-        .from("sequence_steps")
-        .update({ status: "canceled" })
-        .in("treatment_id", treatmentIds)
-        .eq("status", "pending");
-    }
+  if (error) {
+    // Return an error rather than pretending it worked, so it shows up in
+    // Twilio's error log (and triggers the Fallback URL if one is set) —
+    // an opt-out must never be silently dropped.
+    console.error("Failed to record opt-out", error);
+    return twiml(500);
   }
 
-  return new NextResponse(TWIML_EMPTY, { headers: { "Content-Type": "text/xml" } });
+  return twiml();
 }

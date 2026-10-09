@@ -19,6 +19,9 @@ create type message_channel as enum ('sms', 'whatsapp', 'email');
 create type sequence_step_name as enum ('day_3', 'day_7', 'day_14', 'day_30');
 create type sequence_step_status as enum ('pending', 'sent', 'failed', 'canceled', 'skipped_no_consent');
 create type visit_type as enum ('hygiene', 'extraction', 'other');
+-- Who recorded a consent row: a member of staff, or the patient themselves
+-- (e.g. replying STOP). Staff rows must say which staff member.
+create type consent_source as enum ('staff', 'patient_reply');
 
 -- ---------------------------------------------------------------------------
 -- Tenancy
@@ -75,9 +78,11 @@ create table consents (
   patient_id uuid not null references patients(id) on delete cascade,
   category consent_category not null,
   granted boolean not null,
-  captured_by uuid not null references auth.users(id),
+  source consent_source not null default 'staff',
+  captured_by uuid references auth.users(id),
   captured_at timestamptz not null default now(),
-  notes text
+  notes text,
+  check (source <> 'staff' or captured_by is not null)
 );
 
 create or replace function prevent_consent_mutation()
@@ -93,8 +98,9 @@ create trigger consents_no_update
 before update or delete on consents
 for each row execute function prevent_consent_mutation();
 
--- Latest-row-wins helper for the cross-sell category, used both by the app
--- and enforced again here at the database level.
+-- Latest-row-wins helper for the cross-sell category. The app checks this
+-- before logging a suggestion, and the visits trigger below enforces it
+-- again at the database level.
 create or replace function has_cross_sell_consent(p_patient_id uuid)
 returns boolean
 language sql
@@ -147,6 +153,15 @@ begin
 
   if not coalesce(v_ok, false) then
     raise exception 'treatment requires a granted quote_followup consent on file for this patient';
+  end if;
+
+  -- A patient who has opted out (e.g. replied STOP) can't be put back into
+  -- a sequence just by adding a new quote. Staff must first record that the
+  -- patient asked to hear from the practice again — see
+  -- check_patient_reconsent below.
+  if exists (select 1 from patients p
+             where p.id = new.patient_id and p.opted_out_at is not null) then
+    raise exception 'patient has opted out of follow-up messages';
   end if;
   return new;
 end;
@@ -211,6 +226,108 @@ create table visits (
   created_at timestamptz not null default now()
 );
 
+-- A cross-sell suggestion can only be marked as sent if the patient's most
+-- recent cross_sell consent is a grant — the database-level twin of the
+-- check in lib/actions/visits.ts.
+create or replace function check_visit_cross_sell_consent()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.suggestion_sent and not has_cross_sell_consent(new.patient_id) then
+    raise exception 'cross-sell suggestion requires cross_sell consent for this patient';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger visits_require_cross_sell_consent
+before insert or update on visits
+for each row execute function check_visit_cross_sell_consent();
+
+-- ---------------------------------------------------------------------------
+-- Opt-out and re-consent
+-- ---------------------------------------------------------------------------
+
+-- Clearing an opt-out is only allowed if a fresh, granted quote_followup
+-- consent was recorded *after* the patient opted out — i.e. the patient
+-- has positively asked to hear from the practice again, and that request
+-- is on the consent record.
+create or replace function check_patient_reconsent()
+returns trigger
+language plpgsql
+as $$
+begin
+  if old.opted_out_at is not null and new.opted_out_at is null then
+    if not exists (
+      select 1 from consents c
+      where c.patient_id = new.id
+        and c.category = 'quote_followup'
+        and c.granted = true
+        and c.captured_at > old.opted_out_at
+    ) then
+      raise exception 'cannot clear an opt-out without a new quote_followup consent recorded after it';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger patients_require_reconsent
+before update on patients
+for each row execute function check_patient_reconsent();
+
+-- Called by the inbound SMS/WhatsApp webhook when a patient replies STOP.
+-- In one transaction, for every patient record with that number (across
+-- all practices, since the reply can't be attributed to just one): marks
+-- them opted out, appends a withdrawal to the consent history for both
+-- categories, and cancels every pending message. Only the service role
+-- (server-side webhook code) may call it.
+create or replace function record_patient_opt_out(p_phone text)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_count integer;
+begin
+  with matched as (
+    update patients
+    set opted_out_at = coalesce(opted_out_at, now())
+    where phone = p_phone
+    returning id, practice_id
+  ),
+  withdrawn as (
+    insert into consents (practice_id, patient_id, category, granted, source, notes)
+    select m.practice_id, m.id, cat.category, false, 'patient_reply',
+           'Patient replied STOP to a follow-up message.'
+    from matched m
+    cross join (values ('quote_followup'::consent_category),
+                       ('cross_sell'::consent_category)) as cat(category)
+    returning 1
+  ),
+  canceled as (
+    update sequence_steps s
+    set status = 'canceled', error = 'Patient opted out'
+    from treatments t
+    where s.treatment_id = t.id
+      and t.patient_id in (select id from matched)
+      and s.status = 'pending'
+    returning 1
+  )
+  -- Postgres always runs data-modifying CTEs to completion, even the ones
+  -- not referenced in the final select.
+  select count(*) into v_count from matched;
+  return v_count;
+end;
+$$;
+
+-- Supabase grants new functions to anon/authenticated by default, so
+-- revoke those explicitly too.
+revoke all on function record_patient_opt_out(text) from public, anon, authenticated;
+grant execute on function record_patient_opt_out(text) to service_role;
+
 -- ---------------------------------------------------------------------------
 -- Settings
 -- ---------------------------------------------------------------------------
@@ -240,7 +357,15 @@ begin
     (new.id, 'day_14', 'sms',
      '{patientName}, a gentle nudge from {practiceName} about the {treatmentType} we discussed. We can hold your quote a little longer. Reply STOP to opt out.'),
     (new.id, 'day_30', 'sms',
-     'Last check-in from {practiceName}: your {treatmentType} quote is still available whenever you''re ready. Reply STOP to opt out.');
+     'Last check-in from {practiceName}: your {treatmentType} quote is still available whenever you''re ready. Reply STOP to opt out.'),
+    (new.id, 'day_3', 'email',
+     E'Hi {patientName},\n\nJust checking in about the {treatmentType} we quoted at {practiceName}. If you have any questions, or you''d like to book, simply reply to this email or give us a call.\n\nKind regards,\n{practiceName}'),
+    (new.id, 'day_7', 'email',
+     E'Hi {patientName},\n\nYour {treatmentType} quote from {practiceName} is still open. We''re happy to talk it through with you before you decide — just reply to this email.\n\nKind regards,\n{practiceName}'),
+    (new.id, 'day_14', 'email',
+     E'Hi {patientName},\n\nA gentle reminder from {practiceName} about the {treatmentType} we discussed. We can hold your quote a little longer if that helps.\n\nKind regards,\n{practiceName}'),
+    (new.id, 'day_30', 'email',
+     E'Hi {patientName},\n\nThis is our last check-in about your {treatmentType} quote — it''s still available whenever you''re ready.\n\nKind regards,\n{practiceName}');
 
   return new;
 end;
@@ -283,8 +408,9 @@ alter table callback_requests enable row level security;
 create policy practices_member_read on practices
   for select using (id = current_practice_id());
 
-create policy practices_member_update on practices
-  for update using (id = current_practice_id());
+-- Deliberately no UPDATE policy on practices: plan, status and Stripe IDs
+-- are only ever changed server-side by the Stripe webhook (service role),
+-- so a practice can't reactivate or upgrade itself.
 
 create policy practice_members_self_read on practice_members
   for select using (user_id = auth.uid());

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useTransition, useState } from "react";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,11 +49,20 @@ export function LogVisitForm() {
     async (_prev, formData) => logVisit(formData),
     {}
   );
+  const [, startTransition] = useTransition();
+
+  // Submit via onSubmit rather than the form's `action` prop so React
+  // doesn't clear what was typed when the server returns an error.
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransition(() => formAction(formData));
+  }
 
   const [wantsSuggestion, setWantsSuggestion] = useState(false);
 
   return (
-    <form action={formAction} className="max-w-2xl space-y-6">
+    <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
       <div>
         <h1 className="font-display text-3xl font-medium text-ink-900">Log a visit</h1>
         <p className="mt-2 text-sm text-ink-500">
