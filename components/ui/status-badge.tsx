@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import type { TreatmentStatus } from "@/lib/types";
+import type { DisplayStatus } from "@/lib/treatment-status";
 
-const config: Record<TreatmentStatus, { label: string; className: string }> = {
+const config: Record<DisplayStatus, { label: string; className: string }> = {
   in_sequence: {
     label: "In sequence",
     className: "bg-teal-100 text-teal-800",
@@ -18,9 +18,17 @@ const config: Record<TreatmentStatus, { label: string; className: string }> = {
     label: "Reminder set",
     className: "bg-ink-900/6 text-ink-700",
   },
+  opted_out: {
+    label: "Opted out",
+    className: "bg-clay-100 text-clay-700",
+  },
+  messages_finished: {
+    label: "Messages finished",
+    className: "bg-ink-900/6 text-ink-700",
+  },
 };
 
-export function StatusBadge({ status }: { status: TreatmentStatus }) {
+export function StatusBadge({ status }: { status: DisplayStatus }) {
   const c = config[status];
   return (
     <span

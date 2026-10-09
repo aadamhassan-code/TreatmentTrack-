@@ -16,7 +16,7 @@ export default async function DashboardPage() {
 
   const { data: treatments } = await supabase
     .from("treatments")
-    .select("*, patient:patients(*)")
+    .select("*, patient:patients(*), sequence_steps(status, error)")
     .eq("practice_id", practice.id)
     .order("created_at", { ascending: false });
 

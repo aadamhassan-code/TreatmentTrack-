@@ -49,6 +49,13 @@ export async function GET(request: NextRequest) {
     .select("practice_id, step, channel, body")
     .in("practice_id", practiceIds);
 
+  const { data: practiceSettings } = await supabase
+    .from("settings")
+    .select("practice_id, sms_enabled, whatsapp_enabled, email_enabled")
+    .in("practice_id", practiceIds);
+
+  const settingsMap = new Map((practiceSettings ?? []).map((s) => [s.practice_id, s]));
+
   const templateMap = new Map(
     (templates ?? []).map((t) => [`${t.practice_id}:${t.step}:${t.channel}`, t.body])
   );
@@ -65,6 +72,7 @@ export async function GET(request: NextRequest) {
       practiceStatus: step.practice?.status ?? null,
       treatmentStatus: step.treatment?.status ?? null,
       patient: step.treatment?.patient ?? null,
+      channelEnabled: Boolean(settingsMap.get(step.practice_id)?.[`${step.channel}_enabled`]),
       hasTemplate: Boolean(template),
     });
 

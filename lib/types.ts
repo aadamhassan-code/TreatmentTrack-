@@ -56,6 +56,7 @@ export interface Treatment {
   lost_at: string | null;
   // joined
   patient?: Patient;
+  sequence_steps?: { status: string; error: string | null }[];
 }
 
 export interface MessageTemplate {

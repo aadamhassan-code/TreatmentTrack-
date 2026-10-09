@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { formatGBP } from "@/lib/utils";
+import { displayStatus } from "@/lib/treatment-status";
 import { markTreatmentBooked, markTreatmentLost } from "@/lib/actions/treatments";
 import type { Treatment } from "@/lib/types";
 
@@ -44,7 +45,7 @@ export function TreatmentsTable({ treatments }: { treatments: Treatment[] }) {
                   {formatGBP(t.value_pence)}
                 </td>
                 <td className="px-5 py-4">
-                  <StatusBadge status={t.status} />
+                  <StatusBadge status={displayStatus(t)} />
                 </td>
                 <td className="px-5 py-4">
                   {actionable && (

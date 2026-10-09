@@ -6,6 +6,7 @@ const base: StepToSend = {
   practiceStatus: "active",
   treatmentStatus: "in_sequence",
   patient: { phone: "+447700900123", email: "p@example.com", opted_out_at: null },
+  channelEnabled: true,
   hasTemplate: true,
 };
 
@@ -51,6 +52,23 @@ describe("decideSend — re-checked at the moment of sending", () => {
     expect(
       decideSend({ ...base, channel: "email", patient: { ...base.patient!, email: null } })
     ).toEqual({ action: "fail", reason: "No email contact on file" });
+  });
+
+  test("a channel switched off in Settings after scheduling is canceled, not sent", () => {
+    expect(decideSend({ ...base, channel: "email", channelEnabled: false })).toEqual({
+      action: "cancel",
+      reason: "Email follow-up is turned off in Settings",
+    });
+  });
+
+  test("opt-out still wins over a switched-off channel", () => {
+    expect(
+      decideSend({
+        ...base,
+        channelEnabled: false,
+        patient: { ...base.patient!, opted_out_at: "2026-01-01T00:00:00Z" },
+      })
+    ).toEqual({ action: "skip_no_consent" });
   });
 
   test("missing template fails", () => {

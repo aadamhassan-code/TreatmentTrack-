@@ -1,10 +1,14 @@
 import type { Channel } from "@/lib/types";
 
+const CHANNEL_LABELS: Record<Channel, string> = { sms: "SMS", whatsapp: "WhatsApp", email: "Email" };
+
 export interface StepToSend {
   channel: Channel;
   practiceStatus: string | null;
   treatmentStatus: string | null;
   patient: { phone: string; email: string | null; opted_out_at: string | null } | null;
+  /** Whether the practice currently has this channel switched on in Settings. */
+  channelEnabled: boolean;
   hasTemplate: boolean;
 }
 
@@ -36,6 +40,12 @@ export function decideSend(step: StepToSend): SendDecision {
   // in case anything slipped through.
   if (step.treatmentStatus !== "in_sequence") {
     return { action: "cancel", reason: "Treatment is no longer being followed up" };
+  }
+
+  // Steps are scheduled days in advance; if the practice has since turned
+  // this channel off in Settings, respect that now.
+  if (!step.channelEnabled) {
+    return { action: "cancel", reason: `${CHANNEL_LABELS[step.channel]} follow-up is turned off in Settings` };
   }
 
   if (!step.hasTemplate) return { action: "fail", reason: "No template configured for this step/channel" };
