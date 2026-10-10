@@ -3,6 +3,7 @@ import { TreatmentsTable } from "@/components/dashboard/treatments-table";
 import { LinkButton } from "@/components/ui/button";
 import { formatGBP, ukDate } from "@/lib/utils";
 import { periodStart } from "@/lib/reports";
+import { displayStatus } from "@/lib/treatment-status";
 import { requireCurrentPractice } from "@/lib/practice";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAll } from "@/lib/supabase/fetch-all";
@@ -51,7 +52,11 @@ export default async function DashboardPage() {
   ]);
 
   const bookedThisMonth = bookedRecently.filter((t) => ukDate(t.converted_at) >= monthStart);
-  const pipelinePence = open.reduce((sum, t) => sum + t.value_pence, 0);
+  // Opted-out patients won't get any more messages, so their quotes stay
+  // listed (they might still book) but aren't counted as pipeline.
+  const optedOut = open.filter((t) => displayStatus(t) === "opted_out");
+  const following = open.filter((t) => displayStatus(t) !== "opted_out");
+  const pipelinePence = following.reduce((sum, t) => sum + t.value_pence, 0);
   const recoveredPence = bookedThisMonth.reduce((sum, t) => sum + t.value_pence, 0);
 
   return (
@@ -73,7 +78,10 @@ export default async function DashboardPage() {
         <LedgerStat
           label="Pipeline value"
           value={formatGBP(pipelinePence)}
-          caption={`${open.length} quote${open.length === 1 ? "" : "s"} still open`}
+          caption={
+            `${following.length} open quote${following.length === 1 ? "" : "s"} being followed up` +
+            (optedOut.length ? ` · ${optedOut.length} opted out, not counted` : "")
+          }
         />
         <LedgerStat
           label="Recovered this month"

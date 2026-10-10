@@ -8,7 +8,10 @@ const base: StepToSend = {
   patient: { phone: "+447700900123", email: "p@example.com", opted_out_at: null },
   channelEnabled: true,
   hasTemplate: true,
+  providerConfigured: true,
+  scheduledFor: "2026-10-10T08:00:00Z",
 };
+const NOW = new Date("2026-10-10T09:00:00Z");
 
 describe("decideSend — re-checked at the moment of sending", () => {
   test("sends a normal due SMS to the patient's phone", () => {
@@ -68,6 +71,21 @@ describe("decideSend — re-checked at the moment of sending", () => {
         channelEnabled: false,
         patient: { ...base.patient!, opted_out_at: "2026-01-01T00:00:00Z" },
       })
+    ).toEqual({ action: "skip_no_consent" });
+  });
+
+  test("a due message waits while sending isn't connected yet", () => {
+    expect(decideSend({ ...base, providerConfigured: false }, NOW)).toEqual({ action: "wait" });
+  });
+
+  test("…but gives up once it's more than 7 days overdue", () => {
+    const d = decideSend({ ...base, providerConfigured: false, scheduledFor: "2026-10-02T08:00:00Z" }, NOW);
+    expect(d.action).toBe("fail");
+  });
+
+  test("opt-out still wins while waiting for a connection", () => {
+    expect(
+      decideSend({ ...base, providerConfigured: false, patient: { ...base.patient!, opted_out_at: "2026-01-01T00:00:00Z" } }, NOW)
     ).toEqual({ action: "skip_no_consent" });
   });
 

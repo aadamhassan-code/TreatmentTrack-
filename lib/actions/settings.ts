@@ -33,18 +33,27 @@ export async function saveTemplates(entries: TemplateEntry[]) {
   const { practice } = await requireOwner();
   const supabase = await createClient();
 
+  const now = new Date().toISOString();
   const rows = entries
     .filter((e) => e.body.trim().length > 0)
-    .map((e) => ({
-      practice_id: practice.id,
-      step: e.step,
-      channel: e.channel,
-      body: e.body,
-      updated_at: new Date().toISOString(),
-    }));
+    .map((e) => ({ practice_id: practice.id, step: e.step, channel: e.channel, body: e.body, updated_at: now }));
 
-  if (rows.length === 0) return;
+  // Clearing a template's text removes it, so that step isn't sent on that
+  // channel. Messages already scheduled for it fail at send time with
+  // "No template configured" rather than sending something blank.
+  const cleared = entries.filter((e) => e.body.trim().length === 0);
 
-  await supabase.from("message_templates").upsert(rows, { onConflict: "practice_id,step,channel" });
+  if (rows.length > 0) {
+    const { error } = await supabase.from("message_templates").upsert(rows, { onConflict: "practice_id,step,channel" });
+    if (error) throw new Error("Couldn't save templates");
+  }
+  for (const e of cleared) {
+    await supabase
+      .from("message_templates")
+      .delete()
+      .eq("practice_id", practice.id)
+      .eq("step", e.step)
+      .eq("channel", e.channel);
+  }
   revalidatePath("/settings");
 }

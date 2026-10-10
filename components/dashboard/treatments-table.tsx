@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { daysSince, formatDate, formatGBP } from "@/lib/utils";
 import { displayStatus } from "@/lib/treatment-status";
-import { setTreatmentOutcome } from "@/lib/actions/treatments";
+import { reopenTreatment, setTreatmentOutcome } from "@/lib/actions/treatments";
 import type { Treatment, TreatmentOutcome } from "@/lib/types";
 
 const OUTCOME_BUTTONS: { outcome: TreatmentOutcome; label: string; variant: "secondary" | "ghost" }[] = [
@@ -43,6 +43,18 @@ export function TreatmentsTable({
         await setTreatmentOutcome(id, outcome);
       } catch {
         setError("Couldn't update that quote. Please try again.");
+      }
+    });
+  }
+
+  function reopen(id: string) {
+    if (!confirm("Reopen this quote? It goes back on the open list and its remaining follow-up messages restart (the next one tomorrow at the earliest).")) return;
+    setError(null);
+    startTransition(async () => {
+      try {
+        await reopenTreatment(id);
+      } catch {
+        setError("Couldn't reopen that quote. Please try again.");
       }
     });
   }
@@ -110,7 +122,12 @@ export function TreatmentsTable({
                       ))}
                     </div>
                   ) : (
-                    <span className="text-ink-700">{closedOn(t) ?? "—"}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-ink-700">{closedOn(t) ?? "—"}</span>
+                      <Button size="sm" variant="ghost" disabled={isPending} onClick={() => reopen(t.id)}>
+                        Reopen
+                      </Button>
+                    </div>
                   )}
                 </td>
               </tr>

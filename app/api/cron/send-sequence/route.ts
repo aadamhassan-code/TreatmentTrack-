@@ -11,6 +11,7 @@ interface DueStep {
   practice_id: string;
   step: SequenceStep;
   channel: Channel;
+  scheduled_for: string;
   treatment: {
     treatment_type: string;
     status: string;
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
   const { data: dueSteps, error } = await supabase
     .from("sequence_steps")
     .select(
-      "id, practice_id, step, channel, treatment:treatments(treatment_type, status, patient:patients(full_name, phone, email, opted_out_at)), practice:practices(name, status)"
+      "id, practice_id, step, channel, scheduled_for, treatment:treatments(treatment_type, status, patient:patients(full_name, phone, email, opted_out_at)), practice:practices(name, status)"
     )
     .eq("status", "pending")
     .lte("scheduled_for", new Date().toISOString());
@@ -64,6 +65,7 @@ export async function GET(request: NextRequest) {
   let failed = 0;
   let skipped = 0;
   let canceled = 0;
+  let waiting = 0;
 
   for (const step of steps) {
     const template = templateMap.get(`${step.practice_id}:${step.step}:${step.channel}`);
@@ -74,7 +76,14 @@ export async function GET(request: NextRequest) {
       patient: step.treatment?.patient ?? null,
       channelEnabled: Boolean(settingsMap.get(step.practice_id)?.[`${step.channel}_enabled`]),
       hasTemplate: Boolean(template),
+      providerConfigured: getProvider(step.channel).isConfigured(),
+      scheduledFor: step.scheduled_for,
     });
+
+    if (decision.action === "wait") {
+      waiting++;
+      continue;
+    }
 
     if (decision.action === "skip_no_consent") {
       await supabase.from("sequence_steps").update({ status: "skipped_no_consent" }).eq("id", step.id);
@@ -121,5 +130,5 @@ export async function GET(request: NextRequest) {
     else failed++;
   }
 
-  return NextResponse.json({ processed: steps.length, sent, failed, skipped, canceled });
+  return NextResponse.json({ processed: steps.length, sent, failed, skipped, canceled, waiting });
 }

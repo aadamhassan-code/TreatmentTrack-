@@ -1,5 +1,5 @@
 import { parseCsv } from "@/lib/csv";
-import { normalizePhone } from "@/lib/utils";
+import { isTextableNumber, normalizePhone } from "@/lib/utils";
 
 export const MAX_IMPORT_ROWS = 500;
 /** Older quotes than this aren't imported: the patient is unlikely to expect a follow-up. */
@@ -141,6 +141,7 @@ export function parseImport(text: string, today: string): ParsedImport {
     if (!patientName) errors.push("Missing patient name");
     if (!rawPhone) errors.push("Missing phone number");
     else if (!/^\+\d{10,15}$/.test(phone)) errors.push(`"${rawPhone}" doesn't look like a phone number`);
+    else if (!isTextableNumber(phone)) errors.push(`"${rawPhone}" isn't a mobile number — texts can't be sent to landlines`);
     if (email && !EMAIL_RE.test(email)) errors.push(`"${email}" doesn't look like an email address`);
     if (!treatmentType) errors.push("Missing treatment type");
     if (!rawValue) errors.push("Missing value");

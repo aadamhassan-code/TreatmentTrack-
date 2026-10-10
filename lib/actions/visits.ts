@@ -18,26 +18,34 @@ export async function logVisit(formData: FormData): Promise<LogVisitResult> {
 
   const patientName = String(formData.get("patientName") ?? "").trim();
   const phone = normalizePhone(String(formData.get("phone") ?? "").trim());
+  const email = String(formData.get("email") ?? "").trim().toLowerCase() || null;
   const visitType = String(formData.get("visitType") ?? "").trim() as VisitType;
   const suggestedTreatmentType = String(formData.get("suggestedTreatmentType") ?? "").trim();
 
   if (!patientName || !phone || !visitType) {
     return { error: "Please fill in patient name, phone and visit type." };
   }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: "That email address doesn't look right — please check it, or leave it blank." };
+  }
 
   const { data: existingPatient } = await supabase
     .from("patients")
-    .select("id")
+    .select("id, email")
     .eq("practice_id", practice.id)
     .eq("phone", phone)
     .maybeSingle();
+
+  if (existingPatient && email && !existingPatient.email) {
+    await supabase.from("patients").update({ email }).eq("id", existingPatient.id);
+  }
 
   let patientId = existingPatient?.id as string | undefined;
 
   if (!patientId) {
     const { data: newPatient, error: patientError } = await supabase
       .from("patients")
-      .insert({ practice_id: practice.id, full_name: patientName, phone })
+      .insert({ practice_id: practice.id, full_name: patientName, phone, email })
       .select("id")
       .single();
 

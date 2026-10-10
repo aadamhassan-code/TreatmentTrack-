@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   LayoutDashboard,
   FilePlus2,
@@ -12,6 +12,8 @@ import {
   Settings,
   Users,
   RefreshCw,
+  Menu,
+  X,
 } from "lucide-react";
 import { switchPractice } from "@/lib/actions/team";
 import { cn } from "@/lib/utils";
@@ -57,9 +59,11 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const [switching, startTransition] = useTransition();
+  // Phone-sized screens: the sidebar becomes a slide-out menu.
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  return (
-    <aside className="flex w-64 shrink-0 flex-col bg-teal-950 text-cream-50">
+  const content = (
+    <>
       <div className="px-6 py-6">
         <p className="font-display text-lg font-medium">TreatmentTrack</p>
         {practices.length > 1 ? (
@@ -101,6 +105,7 @@ export function Sidebar({
               <Link
                 key={href}
                 href={href}
+                onClick={() => setMenuOpen(false)}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   active
@@ -122,6 +127,44 @@ export function Sidebar({
       <div className="border-t border-cream-50/10 px-3 py-4">
         <SignOutButton />
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      <div className="sticky top-0 z-30 flex items-center justify-between bg-teal-950 px-4 py-3 text-cream-50 md:hidden">
+        <div className="min-w-0">
+          <p className="font-display text-base font-medium">TreatmentTrack</p>
+          <p className="truncate text-xs text-teal-300">{practiceName}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Open menu"
+          className="rounded-md p-2 hover:bg-cream-50/10"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      </div>
+
+      {menuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-ink-900/50" onClick={() => setMenuOpen(false)} />
+          <aside className="relative flex h-full w-72 max-w-[85%] flex-col overflow-y-auto bg-teal-950 text-cream-50">
+            <button
+              type="button"
+              onClick={() => setMenuOpen(false)}
+              aria-label="Close menu"
+              className="absolute right-3 top-5 rounded-md p-2 hover:bg-cream-50/10"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            {content}
+          </aside>
+        </div>
+      )}
+
+      <aside className="hidden w-64 shrink-0 flex-col bg-teal-950 text-cream-50 md:flex">{content}</aside>
+    </>
   );
 }

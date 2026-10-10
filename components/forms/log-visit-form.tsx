@@ -100,6 +100,18 @@ export function LogVisitForm() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-ink-900" htmlFor="email">
+              Email <span className="font-normal text-ink-500">(optional)</span>
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              className="mt-1.5 w-full rounded-lg border border-ink-900/15 bg-cream-0 px-3.5 py-2.5 text-sm focus:border-teal-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-ink-900" htmlFor="visitType">
               Visit type
             </label>

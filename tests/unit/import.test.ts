@@ -84,3 +84,21 @@ describe("value and date parsing", () => {
     ["October 1st", null],
   ])("parseUkDate(%j) = %j", (raw, iso) => expect(parseUkDate(raw)).toBe(iso));
 });
+
+describe("mobile numbers", () => {
+  test.each([
+    ["07700 900123", true],
+    ["+44 7700 900123", true],
+    ["020 7946 0000", false],
+    ["01632 960123", false],
+    ["+353 85 123 4567", true],
+  ])("%s textable: %s", async (raw, ok) => {
+    const { isTextableNumber, normalizePhone } = await import("@/lib/utils");
+    expect(isTextableNumber(normalizePhone(raw))).toBe(ok);
+  });
+
+  test("a landline in an import is flagged", () => {
+    const { rows } = parseImport(`${header}\nJo,020 7946 0000,,Crown,100,`, TODAY);
+    expect(rows[0].errors.join()).toContain("isn't a mobile number");
+  });
+});

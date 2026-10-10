@@ -125,3 +125,28 @@ describe("imported quotes", () => {
     ).rejects.toThrow(/check constraint/);
   });
 });
+
+describe("reopening a closed quote (undo)", () => {
+  test("staff can put it back in sequence and restore its cancelled messages", async () => {
+    const practice = await seedPractice(db);
+    const { treatmentId } = await seedTreatment(db, practice, "+447700900801");
+    await asUser(db, practice.userId, async (tx) => {
+      await tx.query("update treatments set status = 'lost' where id = $1", [treatmentId]);
+      await tx.query(
+        "update treatments set status = 'in_sequence', lost_at = null where id = $1 and status in ('converted','declined','lost')",
+        [treatmentId]
+      );
+      await tx.query(
+        "update sequence_steps set status = 'pending', error = null where treatment_id = $1 and error = 'Quote closed'",
+        [treatmentId]
+      );
+    });
+    expect(await pendingSteps(treatmentId)).toBe(2);
+    const row = await one<{ status: string; lost_at: string | null }>(
+      db,
+      "select status, lost_at from treatments where id = $1",
+      [treatmentId]
+    );
+    expect(row).toEqual({ status: "in_sequence", lost_at: null });
+  });
+});

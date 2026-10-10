@@ -47,3 +47,13 @@ export function ukDate(at: Date | string = new Date()): string {
 export function daysSince(dateOnly: string, now: Date = new Date()): number {
   return Math.round((Date.parse(ukDate(now)) - Date.parse(dateOnly)) / 86_400_000);
 }
+
+/**
+ * Whether a normalised (+44…) number can receive texts. UK mobiles are
+ * +447 followed by 9 digits; UK landlines can't receive SMS. Other
+ * countries' numbers are accepted if they look like a full number.
+ */
+export function isTextableNumber(e164: string): boolean {
+  if (e164.startsWith("+44")) return /^\+447\d{9}$/.test(e164);
+  return /^\+\d{10,15}$/.test(e164);
+}

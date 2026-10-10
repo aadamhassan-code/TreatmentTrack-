@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireCurrentPractice } from "@/lib/practice";
 import { scheduleSequence } from "@/lib/sequence";
-import { normalizePhone, ukDate } from "@/lib/utils";
+import { isTextableNumber, normalizePhone, ukDate } from "@/lib/utils";
 import { OPEN_STATUSES, type TreatmentOutcome } from "@/lib/types";
 
 export interface AddTreatmentResult {
@@ -34,6 +34,9 @@ export async function addTreatment(formData: FormData): Promise<AddTreatmentResu
 
   if (!patientName || !phone || !treatmentType || !valuePounds || valuePounds <= 0) {
     return { error: "Please fill in patient name, phone, treatment type and a value." };
+  }
+  if (!isTextableNumber(phone)) {
+    return { error: "That doesn't look like a mobile number. Follow-ups are sent by text, so please enter the patient's mobile (07…)." };
   }
   if (email && !EMAIL_RE.test(email)) {
     return { error: "That email address doesn't look right — please check it, or leave it blank." };
@@ -203,6 +206,55 @@ export async function setTreatmentOutcome(treatmentId: string, outcome: Treatmen
   if (error) {
     console.error("Failed to close treatment", error);
     throw new Error("Couldn't update that quote. Please try again.");
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/reports");
+}
+
+const DAY_MS = 86_400_000;
+
+/**
+ * Undo for Booked / Declined / Lost (e.g. a mis-click). Puts the quote back
+ * in sequence and restores the follow-up messages that closing it
+ * cancelled. If those were due in the meantime, they're all moved later by
+ * the same amount so the next one goes tomorrow — never a burst of
+ * overdue texts at once. Opt-out is still checked when each one is sent.
+ */
+export async function reopenTreatment(treatmentId: string) {
+  const { practice } = await requireCurrentPractice();
+  const supabase = await createClient();
+
+  const { data: reopened, error } = await supabase
+    .from("treatments")
+    .update({ status: "in_sequence", converted_at: null, declined_at: null, lost_at: null })
+    .eq("id", treatmentId)
+    .eq("practice_id", practice.id)
+    .in("status", ["converted", "declined", "lost"])
+    .select("id");
+  if (error || !reopened?.length) throw new Error("Couldn't reopen that quote. Please try again.");
+
+  const { data: steps } = await supabase
+    .from("sequence_steps")
+    .select("id, scheduled_for")
+    .eq("treatment_id", treatmentId)
+    .eq("status", "canceled")
+    .eq("error", "Quote closed")
+    .order("scheduled_for");
+
+  if (steps?.length) {
+    const earliest = Date.parse(steps[0].scheduled_for);
+    const shift = Math.max(0, Date.now() + DAY_MS - earliest);
+    for (const step of steps) {
+      await supabase
+        .from("sequence_steps")
+        .update({
+          status: "pending",
+          error: null,
+          scheduled_for: new Date(Date.parse(step.scheduled_for) + shift).toISOString(),
+        })
+        .eq("id", step.id);
+    }
   }
 
   revalidatePath("/dashboard");

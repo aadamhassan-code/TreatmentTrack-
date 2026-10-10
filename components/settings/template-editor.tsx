@@ -67,7 +67,7 @@ export function TemplateEditor({
           </code>
         ))}
         — an opt-out is added automatically to any message that doesn&rsquo;t
-        already include one.
+        already include one. Empty a box and save to stop sending that message.
       </p>
 
       {STEPS.map(({ value: step, label }) => (

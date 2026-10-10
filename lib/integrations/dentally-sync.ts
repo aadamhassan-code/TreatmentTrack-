@@ -1,5 +1,5 @@
 import type { DentallyApi, DentallyPatient, DentallyTreatmentPlan, DentallyTreatmentPlanItem } from "@/lib/integrations/dentally";
-import { normalizePhone, ukDate } from "@/lib/utils";
+import { isTextableNumber, normalizePhone, ukDate } from "@/lib/utils";
 import { MAX_QUOTE_AGE_MONTHS } from "@/lib/import";
 
 /** On the first sync, look back this far for unbooked plans. */
@@ -107,7 +107,7 @@ export async function planDentallySync(
     if (!patient.active) continue;
 
     const normalised = patient.mobile_phone ? normalizePhone(patient.mobile_phone) : "";
-    const phone = /^\+\d{10,15}$/.test(normalised) ? normalised : null;
+    const phone = isTextableNumber(normalised) ? normalised : null;
 
     candidates.push({
       externalPlanId: id(plan.id),

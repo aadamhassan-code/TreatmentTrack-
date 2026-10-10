@@ -10,20 +10,28 @@ export interface StepToSend {
   /** Whether the practice currently has this channel switched on in Settings. */
   channelEnabled: boolean;
   hasTemplate: boolean;
+  /** Whether SMS / WhatsApp / email sending has been set up at all. */
+  providerConfigured: boolean;
+  /** When this message was due (ISO). */
+  scheduledFor: string;
 }
+
+/** How long a due message waits for its channel to be connected before giving up. */
+export const WAIT_FOR_PROVIDER_DAYS = 7;
 
 export type SendDecision =
   | { action: "send"; to: string }
   | { action: "cancel"; reason: string }
   | { action: "skip_no_consent" }
-  | { action: "fail"; reason: string };
+  | { action: "fail"; reason: string }
+  | { action: "wait" };
 
 /**
  * Decides, at the moment of sending, whether one scheduled follow-up
  * message should actually go out. Everything is re-checked here rather
  * than trusted from when the sequence was scheduled days earlier.
  */
-export function decideSend(step: StepToSend): SendDecision {
+export function decideSend(step: StepToSend, now: Date = new Date()): SendDecision {
   if (!step.patient) return { action: "fail", reason: "Missing related treatment/patient data" };
 
   // Opt-out always wins, whatever else is true.
@@ -52,6 +60,18 @@ export function decideSend(step: StepToSend): SendDecision {
 
   const to = step.channel === "email" ? step.patient.email : step.patient.phone;
   if (!to) return { action: "fail", reason: `No ${step.channel} contact on file` };
+
+  // Sending isn't set up yet (e.g. Twilio not connected). Hold the message
+  // for a few days so it goes once it is, rather than failing it outright —
+  // but don't send something weeks late.
+  if (!step.providerConfigured) {
+    const ageDays = (now.getTime() - Date.parse(step.scheduledFor)) / 86_400_000;
+    if (ageDays <= WAIT_FOR_PROVIDER_DAYS) return { action: "wait" };
+    return {
+      action: "fail",
+      reason: `${CHANNEL_LABELS[step.channel]} sending wasn't connected within ${WAIT_FOR_PROVIDER_DAYS} days of this message being due`,
+    };
+  }
 
   return { action: "send", to };
 }

@@ -23,7 +23,7 @@ export default async function AppLayout({
   ]);
 
   return (
-    <div className="flex min-h-full">
+    <div className="min-h-full md:flex">
       <Sidebar
         practiceId={practice.id}
         practiceName={practice.name}
@@ -31,8 +31,8 @@ export default async function AppLayout({
         role={role}
         dentallyPending={dentally ? (dentallyPending ?? 0) : null}
       />
-      <div className="flex-1 bg-cream-50">
-        <div className="mx-auto max-w-6xl px-8 py-10">{children}</div>
+      <div className="min-w-0 flex-1 bg-cream-50">
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10">{children}</div>
       </div>
     </div>
   );
