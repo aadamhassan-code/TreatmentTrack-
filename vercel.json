@@ -1,6 +1,16 @@
 {
   "crons": [
-    { "path": "/api/cron/send-sequence", "schedule": "0 8 * * *" },
-    { "path": "/api/cron/future-intent", "schedule": "0 7 * * *" }
+    {
+      "path": "/api/cron/send-sequence",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/future-intent",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/integrations-sync",
+      "schedule": "30 7 * * *"
+    }
   ]
 }

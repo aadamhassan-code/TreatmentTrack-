@@ -24,14 +24,19 @@ const SUPABASE_STUB = `
   grant execute on function auth.uid() to anon, authenticated, service_role;
 `;
 
+// Like Supabase, every new table in public is granted to the API roles by
+// default (row-level security then decides which rows). Set up before the
+// migrations run, so a migration that revokes access — e.g. to the
+// integrations API-key column — keeps that restriction in tests too.
 const GRANTS = `
   grant usage on schema public to anon, authenticated, service_role;
-  grant all on all tables in schema public to anon, authenticated, service_role;
+  alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 `;
 
 export async function createTestDb(): Promise<PGlite> {
   const db = new PGlite();
   await db.exec(SUPABASE_STUB);
+  await db.exec(GRANTS);
   const migrationsDir = join(__dirname, "../../supabase/migrations");
   const files = readdirSync(migrationsDir).filter((f) => f.endsWith(".sql")).sort();
   for (const file of files) {
@@ -40,7 +45,6 @@ export async function createTestDb(): Promise<PGlite> {
       .replace(/create extension if not exists pgcrypto;/i, "");
     await db.exec(migration);
   }
-  await db.exec(GRANTS);
   return db;
 }
 

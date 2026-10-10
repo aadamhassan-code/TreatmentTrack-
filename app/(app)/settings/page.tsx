@@ -2,6 +2,7 @@ import { Card, CardBody } from "@/components/ui/card";
 import { IntegrationRow } from "@/components/settings/integration-status";
 import { ChannelSettingsForm } from "@/components/settings/channel-settings-form";
 import { TemplateEditor } from "@/components/settings/template-editor";
+import { DentallyConnection, type DentallyIntegrationInfo } from "@/components/settings/dentally-connection";
 import { requireCurrentPractice } from "@/lib/practice";
 import { createClient } from "@/lib/supabase/server";
 import { twilioSmsProvider } from "@/lib/messaging/twilio-sms";
@@ -15,12 +16,18 @@ export default async function SettingsPage() {
   const readOnly = role !== "owner";
   const supabase = await createClient();
 
-  const [{ data: settings }, { data: templates }] = await Promise.all([
+  const [{ data: settings }, { data: templates }, { data: dentally }] = await Promise.all([
     supabase.from("settings").select("*").eq("practice_id", practice.id).single(),
     supabase
       .from("message_templates")
       .select("step, channel, body")
       .eq("practice_id", practice.id),
+    supabase
+      .from("integrations")
+      .select("account_label, region, last_synced_at, last_sync_error")
+      .eq("practice_id", practice.id)
+      .eq("provider", "dentally")
+      .maybeSingle(),
   ]);
 
   const templateEntries = (templates ?? []) as {
@@ -71,6 +78,32 @@ export default async function SettingsPage() {
               connected={isStripeConfigured()}
               hint="Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and the six price IDs (three plans × monthly/annual)."
             />
+          </CardBody>
+        </Card>
+      </section>
+
+      <section>
+        <h2 className="mb-3 font-display text-xl font-medium text-ink-900">Practice software</h2>
+        <Card>
+          <CardBody className="space-y-6">
+            <div>
+              <p className="mb-2 text-sm font-semibold text-ink-900">Dentally</p>
+              <DentallyConnection
+                integration={(dentally as DentallyIntegrationInfo | null) ?? null}
+                isOwner={!readOnly}
+              />
+            </div>
+            <div className="border-t border-ink-900/6 pt-5">
+              <p className="mb-1 text-sm font-semibold text-ink-900">Software of Excellence (Exact / R4)</p>
+              <p className="text-sm text-ink-500">
+                SOE doesn&rsquo;t offer a way for other software to connect directly. Instead, run your outstanding
+                treatment plans report in Exact, export it to Excel, save it as CSV, and use{" "}
+                <a href="/treatments/import" className="font-medium text-teal-700 underline">
+                  Import CSV
+                </a>
+                . Mark quotes Booked from the dashboard when patients book.
+              </p>
+            </div>
           </CardBody>
         </Card>
       </section>
