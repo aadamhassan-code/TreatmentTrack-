@@ -11,7 +11,8 @@ import { isStripeConfigured } from "@/lib/stripe";
 import type { Settings, Channel, SequenceStep } from "@/lib/types";
 
 export default async function SettingsPage() {
-  const { practice } = await requireCurrentPractice();
+  const { practice, role } = await requireCurrentPractice();
+  const readOnly = role !== "owner";
   const supabase = await createClient();
 
   const [{ data: settings }, { data: templates }] = await Promise.all([
@@ -33,6 +34,11 @@ export default async function SettingsPage() {
       <div>
         <h1 className="font-display text-3xl font-medium text-ink-900">Settings</h1>
         <p className="mt-1 text-sm text-ink-500">{practice.name}</p>
+        {readOnly && (
+          <p className="mt-4 rounded-lg bg-ink-900/5 px-4 py-3 text-sm text-ink-700">
+            You can see these settings, but only a practice owner can change them.
+          </p>
+        )}
       </div>
 
       <section>
@@ -78,6 +84,7 @@ export default async function SettingsPage() {
             <ChannelSettingsForm
               settings={settings as Settings}
               whatsappConnected={whatsappProvider.isConfigured()}
+              readOnly={readOnly}
             />
           </CardBody>
         </Card>
@@ -87,7 +94,7 @@ export default async function SettingsPage() {
         <h2 className="mb-3 font-display text-xl font-medium text-ink-900">
           Message templates
         </h2>
-        <TemplateEditor templates={templateEntries} />
+        <TemplateEditor templates={templateEntries} readOnly={readOnly} />
       </section>
     </div>
   );

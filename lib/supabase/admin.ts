@@ -2,8 +2,10 @@ import "server-only";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Service-role client. Bypasses RLS — only ever import this from webhook and
- * cron route handlers, never from anything reachable by a browser request.
+ * Service-role client. Bypasses RLS — only use it from webhook and cron route
+ * handlers, and from server actions that have already checked the caller is
+ * an owner of the practice being changed (see lib/actions/team.ts). Never
+ * from code a browser can reach without that check.
  */
 export function createAdminClient() {
   return createSupabaseClient(

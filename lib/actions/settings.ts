@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireCurrentPractice } from "@/lib/practice";
+import { requireOwner } from "@/lib/practice";
 import type { Channel, SequenceStep } from "@/lib/types";
 
 export async function updateChannelSettings(formData: FormData) {
-  const { practice } = await requireCurrentPractice();
+  const { practice } = await requireOwner();
   const supabase = await createClient();
 
   await supabase
@@ -30,7 +30,7 @@ export interface TemplateEntry {
 }
 
 export async function saveTemplates(entries: TemplateEntry[]) {
-  const { practice } = await requireCurrentPractice();
+  const { practice } = await requireOwner();
   const supabase = await createClient();
 
   const rows = entries

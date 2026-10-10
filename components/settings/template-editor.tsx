@@ -21,8 +21,16 @@ const CHANNELS: { value: Channel; label: string }[] = [
 
 const VARIABLES = ["{patientName}", "{treatmentType}", "{practiceName}"];
 
-export function TemplateEditor({ templates }: { templates: TemplateEntry[] }) {
-  const initial = new Map(templates.map((t) => [`${t.step}:${t.channel}`, t.body]));
+export function TemplateEditor({
+  templates,
+  readOnly = false,
+}: {
+  templates: TemplateEntry[];
+  readOnly?: boolean;
+}) {
+  const initial = new Map(
+    templates.map((t) => [`${t.step}:${t.channel}`, t.body]),
+  );
   const [bodies, setBodies] = useState<Map<string, string>>(initial);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
@@ -38,7 +46,7 @@ export function TemplateEditor({ templates }: { templates: TemplateEntry[] }) {
         step,
         channel,
         body: bodies.get(`${step}:${channel}`) ?? "",
-      }))
+      })),
     );
     startTransition(async () => {
       await saveTemplates(entries);
@@ -49,8 +57,12 @@ export function TemplateEditor({ templates }: { templates: TemplateEntry[] }) {
   return (
     <div className="space-y-6">
       <p className="text-sm text-ink-500">
-        Available variables: {VARIABLES.map((v) => (
-          <code key={v} className="mx-1 rounded bg-ink-900/5 px-1.5 py-0.5 font-mono text-xs">
+        Available variables:{" "}
+        {VARIABLES.map((v) => (
+          <code
+            key={v}
+            className="mx-1 rounded bg-ink-900/5 px-1.5 py-0.5 font-mono text-xs"
+          >
             {v}
           </code>
         ))}
@@ -61,7 +73,9 @@ export function TemplateEditor({ templates }: { templates: TemplateEntry[] }) {
       {STEPS.map(({ value: step, label }) => (
         <Card key={step}>
           <CardBody className="space-y-4">
-            <p className="font-display text-lg font-medium text-teal-900">{label}</p>
+            <p className="font-display text-lg font-medium text-teal-900">
+              {label}
+            </p>
             {CHANNELS.map(({ value: channel, label: channelLabel }) => {
               const key = `${step}:${channel}`;
               return (
@@ -70,6 +84,7 @@ export function TemplateEditor({ templates }: { templates: TemplateEntry[] }) {
                     {channelLabel}
                   </label>
                   <textarea
+                    readOnly={readOnly}
                     value={bodies.get(key) ?? ""}
                     onChange={(e) => setBody(key, e.target.value)}
                     rows={2}
@@ -83,14 +98,16 @@ export function TemplateEditor({ templates }: { templates: TemplateEntry[] }) {
         </Card>
       ))}
 
-      <div className="flex items-center gap-3">
-        <Button onClick={handleSave} disabled={isPending} size="sm">
-          {isPending ? "Saving…" : "Save templates"}
-        </Button>
-        {saved && !isPending && (
-          <span className="text-sm text-teal-700">Saved.</span>
-        )}
-      </div>
+      {!readOnly && (
+        <div className="flex items-center gap-3">
+          <Button onClick={handleSave} disabled={isPending} size="sm">
+            {isPending ? "Saving…" : "Save templates"}
+          </Button>
+          {saved && !isPending && (
+            <span className="text-sm text-teal-700">Saved.</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

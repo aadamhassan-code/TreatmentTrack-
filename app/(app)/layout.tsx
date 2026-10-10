@@ -1,16 +1,16 @@
 import { Sidebar } from "@/components/layout/sidebar";
-import { requireCurrentPractice } from "@/lib/practice";
+import { listMyPractices, requireCurrentPractice } from "@/lib/practice";
 
 export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { practice } = await requireCurrentPractice();
+  const [{ practice, role }, practices] = await Promise.all([requireCurrentPractice(), listMyPractices()]);
 
   return (
     <div className="flex min-h-full">
-      <Sidebar practiceName={practice.name} />
+      <Sidebar practiceId={practice.id} practiceName={practice.name} practices={practices} role={role} />
       <div className="flex-1 bg-cream-50">
         <div className="mx-auto max-w-6xl px-8 py-10">{children}</div>
       </div>
