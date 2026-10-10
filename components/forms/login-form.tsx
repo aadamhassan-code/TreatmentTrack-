@@ -91,6 +91,19 @@ export function LoginForm() {
       setSubmitting(false);
       return;
     }
+
+    // Someone removed from every practice can still sign in, but has
+    // nowhere to go — tell them why rather than bouncing back here.
+    const { data: practiceId } = await supabase.rpc("current_practice_id");
+    if (!practiceId) {
+      await supabase.auth.signOut();
+      setError(
+        "Your login isn't linked to a practice at the moment. Ask your practice owner to invite you from their Team page."
+      );
+      setSubmitting(false);
+      return;
+    }
+
     router.push("/dashboard");
     router.refresh();
   }

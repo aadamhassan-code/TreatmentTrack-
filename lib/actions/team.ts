@@ -43,6 +43,14 @@ export async function inviteTeamMember(formData: FormData): Promise<TeamActionRe
     });
     if (error || !data.user) {
       console.error("Team invite failed", error);
+      const reason = error?.message.toLowerCase() ?? "";
+      if (reason.includes("rate limit")) {
+        return {
+          error:
+            "Too many invite emails have been sent in the last hour. Please try again later — or set up your own email sender in Supabase (Authentication → Emails → SMTP settings) to lift the limit.",
+        };
+      }
+      if (reason.includes("invalid")) return { error: `${email} isn't an email address we can send to. Please check it.` };
       return { error: "Couldn't send the invite email. Please check the address and try again." };
     }
     userId = data.user.id;

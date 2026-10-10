@@ -27,6 +27,7 @@ export function InviteForm() {
     e.preventDefault();
     const form = e.currentTarget;
     const data = new FormData(form);
+    setResult(null);
     startTransition(async () => {
       const res = await inviteTeamMember(data);
       setResult(res);
@@ -113,6 +114,7 @@ export function AddLocationForm() {
     e.preventDefault();
     const form = e.currentTarget;
     const data = new FormData(form);
+    setResult(null);
     startTransition(async () => {
       const res = await addLocation(data);
       setResult(res);
