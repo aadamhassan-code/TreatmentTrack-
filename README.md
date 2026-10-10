@@ -127,3 +127,23 @@ transaction (`record_patient_opt_out`).
 - Every rendered message gets an opt-out appended automatically if the
   practice's own template doesn't already include one
   (`lib/messaging/provider.ts`).
+
+## Dentally and SOE
+
+- **Dentally** only gives API access to approved partners, and is moving
+  partners to its NexGen API (OAuth2). Until TreatmentTrack is approved,
+  leave `DENTALLY_INTEGRATION_ENABLED` unset in production: Settings shows
+  "Coming soon" and practices use Import CSV. The sync logic in
+  `lib/integrations/` (review list, booked detection, dentist matching) is
+  written against Dentally's v1 API and tested against a mock; once approved,
+  the client in `lib/integrations/dentally.ts` needs moving to NexGen's
+  endpoints and OAuth2 before going live.
+- **Software of Excellence (Exact/R4)** has no open API — practices export
+  outstanding treatment plans to CSV and use Import CSV.
+
+## Data location
+
+The Supabase project is in London, and `vercel.json` pins the app's server
+code to Vercel's London region (`lhr1`), so patient data is stored and
+processed in the UK. Twilio (SMS) and Resend (email) are sub-processors that
+handle the message content they send.

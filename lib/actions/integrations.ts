@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireCurrentPractice, requireOwner } from "@/lib/practice";
 import { encryptSecret, isEncryptionConfigured } from "@/lib/crypto";
-import { createDentallyClient, type DentallyRegion } from "@/lib/integrations/dentally";
+import { createDentallyClient, isDentallyIntegrationEnabled, type DentallyRegion } from "@/lib/integrations/dentally";
 import { friendlyDentallyError, runDentallySync, type IntegrationRow } from "@/lib/integrations/run-sync";
 import { saveQuotes } from "@/lib/quotes";
 import { ukDate } from "@/lib/utils";
@@ -38,6 +38,9 @@ export async function connectDentally(formData: FormData): Promise<IntegrationAc
   const apiKey = String(formData.get("apiKey") ?? "").trim();
   const region = (formData.get("region") === "sandbox" ? "sandbox" : "uk") as DentallyRegion;
 
+  if (!isDentallyIntegrationEnabled()) {
+    return { error: "The Dentally connection isn't available yet. Please use Import CSV for now." };
+  }
   if (!apiKey) return { error: "Please paste your Dentally API key." };
   if (!isEncryptionConfigured()) {
     return { error: "TreatmentTrack isn't set up to store API keys yet (INTEGRATIONS_ENCRYPTION_KEY is missing). Please contact support." };

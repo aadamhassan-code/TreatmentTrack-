@@ -3,6 +3,7 @@ import { IntegrationRow } from "@/components/settings/integration-status";
 import { ChannelSettingsForm } from "@/components/settings/channel-settings-form";
 import { TemplateEditor } from "@/components/settings/template-editor";
 import { DentallyConnection, type DentallyIntegrationInfo } from "@/components/settings/dentally-connection";
+import { isDentallyIntegrationEnabled } from "@/lib/integrations/dentally";
 import { requireCurrentPractice } from "@/lib/practice";
 import { createClient } from "@/lib/supabase/server";
 import { twilioSmsProvider } from "@/lib/messaging/twilio-sms";
@@ -88,10 +89,30 @@ export default async function SettingsPage() {
           <CardBody className="space-y-6">
             <div>
               <p className="mb-2 text-sm font-semibold text-ink-900">Dentally</p>
-              <DentallyConnection
-                integration={(dentally as DentallyIntegrationInfo | null) ?? null}
-                isOwner={!readOnly}
-              />
+              {isDentallyIntegrationEnabled() || dentally ? (
+                <DentallyConnection
+                  integration={(dentally as DentallyIntegrationInfo | null) ?? null}
+                  isOwner={!readOnly}
+                />
+              ) : (
+                <div className="space-y-2 text-sm text-ink-500">
+                  <p>
+                    <span className="mr-2 rounded-full bg-gold-200 px-2 py-0.5 text-xs font-medium text-gold-700">
+                      Coming soon
+                    </span>
+                    We&rsquo;re applying to become an approved Dentally partner. Once approved, you&rsquo;ll be able to
+                    connect Dentally here so unbooked treatment plans come in automatically and quotes are marked
+                    Booked when the patient books.
+                  </p>
+                  <p>
+                    Until then, export your outstanding treatment plans from Dentally as a spreadsheet (CSV) and use{" "}
+                    <a href="/treatments/import" className="font-medium text-teal-700 underline">
+                      Import CSV
+                    </a>
+                    , then mark quotes Booked from the dashboard when patients book.
+                  </p>
+                </div>
+              )}
             </div>
             <div className="border-t border-ink-900/6 pt-5">
               <p className="mb-1 text-sm font-semibold text-ink-900">Software of Excellence (Exact / R4)</p>

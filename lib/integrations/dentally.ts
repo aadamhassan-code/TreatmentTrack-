@@ -5,6 +5,17 @@
  */
 export type DentallyRegion = "uk" | "sandbox";
 
+/**
+ * Dentally only gives API access to approved partners (and is moving them
+ * to its NexGen API with OAuth2). Until TreatmentTrack is approved, the
+ * connection stays switched off in production and Settings says "coming
+ * soon"; set DENTALLY_INTEGRATION_ENABLED=true to use it (e.g. in Dentally's
+ * sandbox, or locally against a mock).
+ */
+export function isDentallyIntegrationEnabled(): boolean {
+  return process.env.DENTALLY_INTEGRATION_ENABLED === "true";
+}
+
 const BASE_URLS: Record<DentallyRegion, string> = {
   uk: "https://api.dentally.co/v1",
   sandbox: "https://api.sandbox.dentally.co/v1",
