@@ -39,6 +39,8 @@ export const requireCurrentPractice = cache(async (): Promise<{
   /** Whether quotes can be assigned to this person (always true for dentists). */
   treatsPatients: boolean;
   displayName: string | null;
+  /** Whether they've finished or skipped the first-login guided tour. */
+  tourCompleted: boolean;
 }> => {
   const supabase = await createClient();
 
@@ -68,6 +70,7 @@ export const requireCurrentPractice = cache(async (): Promise<{
     role: membership.role as Role,
     treatsPatients: membership.role === "dentist" || membership.treats_patients,
     displayName: membership.display_name,
+    tourCompleted: Boolean(user.user_metadata?.tour_completed_at),
   };
 });
 

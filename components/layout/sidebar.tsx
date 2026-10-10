@@ -18,6 +18,7 @@ import {
 import { switchPractice } from "@/lib/actions/team";
 import { cn } from "@/lib/utils";
 import { SignOutButton } from "@/components/layout/sign-out-button";
+import { TourReplayButton } from "@/components/tour/guided-tour";
 
 type NavLink = {
   href: string;
@@ -106,6 +107,7 @@ export function Sidebar({
               <Link
                 key={href}
                 href={href}
+                data-tour={`nav-${href}`}
                 onClick={() => setMenuOpen(false)}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
@@ -125,7 +127,8 @@ export function Sidebar({
             );
           })}
       </nav>
-      <div className="border-t border-cream-50/10 px-3 py-4">
+      <div className="space-y-1 border-t border-cream-50/10 px-3 py-4">
+        <TourReplayButton onClick={() => setMenuOpen(false)} />
         <SignOutButton />
       </div>
     </>

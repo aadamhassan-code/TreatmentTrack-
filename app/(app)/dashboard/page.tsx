@@ -91,16 +91,20 @@ export default async function DashboardPage({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {!isDentist && dentists.length > 0 && (
-            <DentistFilter dentists={dentists} value={filter} myId={treatsPatients ? userId : null} />
+            <div data-tour="dentist-filter">
+              <DentistFilter dentists={dentists} value={filter} myId={treatsPatients ? userId : null} />
+            </div>
           )}
-          <LinkButton href="/treatments/import" variant="secondary">
+          <LinkButton href="/treatments/import" variant="secondary" data-tour="nav-/treatments/import">
             Import CSV
           </LinkButton>
-          <LinkButton href="/treatments/new">Add treatment</LinkButton>
+          <LinkButton href="/treatments/new" data-tour="nav-/treatments/new">
+            Add treatment
+          </LinkButton>
         </div>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div data-tour="pipeline" className="grid gap-5 sm:grid-cols-2">
         <LedgerStat
           label="Pipeline value"
           value={formatGBP(pipelinePence)}
@@ -117,7 +121,7 @@ export default async function DashboardPage({
         />
       </div>
 
-      <div>
+      <div data-tour="open-quotes">
         <h2 className="font-display text-xl font-medium text-ink-900">Open quotes</h2>
         <p className="mb-3 mt-1 text-sm text-ink-500">
           Highest value first. When a patient books, declines or goes elsewhere,

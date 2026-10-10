@@ -2,6 +2,8 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { listMyPractices, requireCurrentPractice } from "@/lib/practice";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { GuidedTour } from "@/components/tour/guided-tour";
+import { tourSteps } from "@/lib/tour";
 
 export default async function AppLayout({
   children,
@@ -9,7 +11,10 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const [{ practice, role }, practices] = await Promise.all([requireCurrentPractice(), listMyPractices()]);
+  const [{ practice, role, treatsPatients, tourCompleted }, practices] = await Promise.all([
+    requireCurrentPractice(),
+    listMyPractices(),
+  ]);
 
   // Only show "From Dentally" once it's connected, with a count of plans
   // waiting for review.
@@ -34,7 +39,7 @@ export default async function AppLayout({
       />
       <div className="min-w-0 flex-1 bg-cream-50">
         {practice.requires_owner_approval && !practice.owner_approved_at && (
-          <div className="border-b border-gold-500/30 bg-gold-100 px-4 py-3 text-sm text-ink-900 sm:px-8">
+          <div data-tour="approval-banner" className="border-b border-gold-500/30 bg-gold-100 px-4 py-3 text-sm text-ink-900 sm:px-8">
             <strong>Follow-up messages are on hold</strong> until the owner of {practice.name} approves this
             account, because they go out in the practice&rsquo;s name.{" "}
             {role === "owner" ? (
@@ -47,6 +52,15 @@ export default async function AppLayout({
           </div>
         )}
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10">{children}</div>
+        <GuidedTour
+          autoStart={!tourCompleted}
+          steps={tourSteps({
+            role,
+            treatsPatients,
+            dentallyConnected: Boolean(dentally),
+            awaitingApproval: practice.requires_owner_approval && !practice.owner_approved_at,
+          })}
+        />
       </div>
     </div>
   );

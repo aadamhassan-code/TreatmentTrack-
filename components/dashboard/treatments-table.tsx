@@ -117,7 +117,7 @@ export function TreatmentsTable({
                 </td>
                 <td className="px-5 py-4">
                   {mode === "open" ? (
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1.5" data-tour={i === 0 ? "outcome-buttons" : undefined}>
                       {OUTCOME_BUTTONS.map(({ outcome, label, variant }) => (
                         <Button
                           key={outcome}
