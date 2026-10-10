@@ -24,9 +24,10 @@ export function normalizePhone(raw: string): string {
 
 export function renderTemplate(
   body: string,
-  vars: { patientName: string; treatmentType: string; practiceName: string }
+  vars: { patientName: string; treatmentType: string; practiceName: string; dentistName?: string | null }
 ): string {
   return body
+    .replaceAll("{dentistName}", vars.dentistName?.trim() || "your dentist")
     .replaceAll("{patientName}", vars.patientName)
     .replaceAll("{treatmentType}", vars.treatmentType)
     .replaceAll("{practiceName}", vars.practiceName);

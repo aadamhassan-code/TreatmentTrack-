@@ -89,6 +89,13 @@ describe("decideSend — re-checked at the moment of sending", () => {
     ).toEqual({ action: "skip_no_consent" });
   });
 
+  test("a dentist-first account waits for the practice owner's approval", () => {
+    expect(decideSend({ ...base, awaitingOwnerApproval: true }, NOW)).toEqual({ action: "wait" });
+    const late = decideSend({ ...base, awaitingOwnerApproval: true, scheduledFor: "2026-10-01T08:00:00Z" }, NOW);
+    expect(late.action).toBe("fail");
+    expect(late.action === "fail" && late.reason).toContain("hadn't approved");
+  });
+
   test("missing template fails", () => {
     expect(decideSend({ ...base, hasTemplate: false }).action).toBe("fail");
   });

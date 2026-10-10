@@ -4,14 +4,30 @@ import { LinkButton } from "@/components/ui/button";
 import { formatGBP, ukDate } from "@/lib/utils";
 import { periodStart } from "@/lib/reports";
 import { displayStatus } from "@/lib/treatment-status";
-import { requireCurrentPractice } from "@/lib/practice";
+import { listTreatingDentists, requireCurrentPractice } from "@/lib/practice";
+import { DentistFilter } from "@/components/dashboard/dentist-filter";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAll } from "@/lib/supabase/fetch-all";
 import { OPEN_STATUSES, type Treatment } from "@/lib/types";
 
-export default async function DashboardPage() {
-  const { practice } = await requireCurrentPractice();
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { practice, role, userId, treatsPatients } = await requireCurrentPractice();
   const supabase = await createClient();
+  const isDentist = role === "dentist";
+
+  // Owners and staff can narrow the dashboard to one dentist ("me" = their
+  // own quotes). Dentist logins only ever see their own (row-level security).
+  const dentists = isDentist ? [] : await listTreatingDentists(practice.id);
+  const rawFilter = (await searchParams).dentist;
+  const filter = typeof rawFilter === "string" ? (rawFilter === "me" ? userId : rawFilter) : "";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const scoped = <Q extends { eq: any; is: any }>(q: Q): Q =>
+    !filter || isDentist ? q : filter === "unassigned" ? q.is("dentist_user_id", null) : q.eq("dentist_user_id", filter);
+  const dentistNames = Object.fromEntries(dentists.map((d) => [d.userId, d.name]));
 
   // The 1st of this month in UK time. The query starts a day earlier so no
   // UK-time booking is missed; the exact cut-off is applied below.
@@ -22,10 +38,10 @@ export default async function DashboardPage() {
   const [open, bookedRecently, { data: recentlyClosed }] = await Promise.all([
     // Open quotes, biggest first — the ones most worth a phone call today.
     fetchAll<Treatment>((from, to) =>
-      supabase
+      scoped(supabase
         .from("treatments")
         .select("*, patient:patients(*), sequence_steps(status, error)")
-        .eq("practice_id", practice.id)
+        .eq("practice_id", practice.id))
         .in("status", OPEN_STATUSES)
         .order("value_pence", { ascending: false })
         .order("quoted_on", { ascending: true })
@@ -33,19 +49,19 @@ export default async function DashboardPage() {
         .range(from, to)
     ),
     fetchAll<{ value_pence: number; converted_at: string }>((from, to) =>
-      supabase
+      scoped(supabase
         .from("treatments")
         .select("value_pence, converted_at")
-        .eq("practice_id", practice.id)
+        .eq("practice_id", practice.id))
         .eq("status", "converted")
         .gte("converted_at", queryFrom.toISOString())
         .order("id")
         .range(from, to)
     ),
-    supabase
+    scoped(supabase
       .from("treatments")
       .select("*, patient:patients(*)")
-      .eq("practice_id", practice.id)
+      .eq("practice_id", practice.id))
       .in("status", ["converted", "declined", "lost"])
       .order("updated_at", { ascending: false })
       .limit(10),
@@ -63,10 +79,20 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-medium text-ink-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-ink-500">{practice.name}</p>
+          <h1 className="font-display text-3xl font-medium text-ink-900">
+            {isDentist || filter === userId ? "My quotes" : "Dashboard"}
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">
+            {practice.name}
+            {!isDentist && filter && filter !== userId && (
+              <> · {filter === "unassigned" ? "Not assigned to a dentist" : (dentistNames[filter] ?? "One dentist")}</>
+            )}
+          </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {!isDentist && dentists.length > 0 && (
+            <DentistFilter dentists={dentists} value={filter} myId={treatsPatients ? userId : null} />
+          )}
           <LinkButton href="/treatments/import" variant="secondary">
             Import CSV
           </LinkButton>
@@ -97,13 +123,17 @@ export default async function DashboardPage() {
           Highest value first. When a patient books, declines or goes elsewhere,
           mark it here and their follow-up messages stop.
         </p>
-        <TreatmentsTable treatments={open} mode="open" />
+        <TreatmentsTable treatments={open} mode="open" dentistNames={isDentist ? undefined : dentistNames} />
       </div>
 
       {(recentlyClosed?.length ?? 0) > 0 && (
         <div>
           <h2 className="mb-3 font-display text-xl font-medium text-ink-900">Recently closed</h2>
-          <TreatmentsTable treatments={(recentlyClosed ?? []) as unknown as Treatment[]} mode="closed" />
+          <TreatmentsTable
+            treatments={(recentlyClosed ?? []) as unknown as Treatment[]}
+            mode="closed"
+            dentistNames={isDentist ? undefined : dentistNames}
+          />
         </div>
       )}
     </div>

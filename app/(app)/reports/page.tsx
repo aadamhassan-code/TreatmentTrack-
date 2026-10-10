@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LedgerStat } from "@/components/ui/ledger-stat";
 import { Card, CardBody } from "@/components/ui/card";
 import { cn, formatGBP } from "@/lib/utils";
-import { requireCurrentPractice } from "@/lib/practice";
+import { listTreatingDentists, requireCurrentPractice } from "@/lib/practice";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAll } from "@/lib/supabase/fetch-all";
 import {
@@ -27,7 +27,8 @@ export default async function ReportsPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { practice } = await requireCurrentPractice();
+  const { practice, role } = await requireCurrentPractice();
+  const isDentist = role === "dentist";
   const supabase = await createClient();
   const period = parsePeriod((await searchParams).period);
   const from = periodStart(period);
@@ -38,7 +39,7 @@ export default async function ReportsPage({
     fetchAll<ReportTreatment>((lo, hi) =>
       supabase
         .from("treatments")
-        .select("treatment_type, value_pence, status, quoted_on, converted_at")
+        .select("treatment_type, value_pence, status, quoted_on, converted_at, dentist_user_id")
         .eq("practice_id", practice.id)
         .order("id")
         .range(lo, hi)
@@ -67,6 +68,10 @@ export default async function ReportsPage({
   }
 
   const report = buildReport(treatments, from);
+  const dentistNames = Object.fromEntries(
+    (isDentist ? [] : await listTreatingDentists(practice.id)).map((d) => [d.userId, d.name])
+  );
+  const showByDentist = !isDentist && report.byDentist.some((d) => d.dentistUserId);
   const periodLabel = REPORT_PERIODS.find((p) => p.value === period)!.phrase;
 
   const outcomes: { label: string; tally: Tally; className: string }[] = [
@@ -80,7 +85,7 @@ export default async function ReportsPage({
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-medium text-ink-900">Reports</h1>
+          <h1 className="font-display text-3xl font-medium text-ink-900">{isDentist ? "My reports" : "Reports"}</h1>
           <p className="mt-1 text-sm text-ink-500">{practice.name}</p>
         </div>
         <nav className="flex flex-wrap gap-1 rounded-lg border border-ink-900/10 bg-cream-0 p-1" aria-label="Report period">
@@ -190,6 +195,41 @@ export default async function ReportsPage({
           </div>
         )}
       </div>
+
+      {showByDentist && (
+        <div>
+          <h2 className="mb-3 font-display text-xl font-medium text-ink-900">By dentist</h2>
+          <div className="overflow-x-auto rounded-xl border border-ink-900/8 bg-cream-0">
+            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-ink-900/8 text-xs uppercase tracking-wide text-ink-500">
+                  <th className="px-5 py-3 font-medium">Dentist</th>
+                  <th className="px-5 py-3 text-right font-medium">Quotes</th>
+                  <th className="px-5 py-3 text-right font-medium">Quoted value</th>
+                  <th className="px-5 py-3 text-right font-medium">Booking rate</th>
+                  <th className="px-5 py-3 text-right font-medium">Recovered</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.byDentist.map((row) => (
+                  <tr key={row.dentistUserId ?? "none"} className="border-b border-ink-900/6 last:border-0">
+                    <td className="px-5 py-3 text-ink-900">
+                      {row.dentistUserId ? (dentistNames[row.dentistUserId] ?? "Former team member") : "Not assigned"}
+                    </td>
+                    <td className="px-5 py-3 text-right font-mono tabular-nums">{row.quoted.count}</td>
+                    <td className="px-5 py-3 text-right font-mono tabular-nums">{formatGBP(row.quoted.valuePence)}</td>
+                    <td className="px-5 py-3 text-right font-mono tabular-nums">{percent(row.bookingRate)}</td>
+                    <td className="px-5 py-3 text-right font-mono tabular-nums">{formatGBP(row.recovered.valuePence)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-xs text-ink-500">
+            Quotes and booking rate are for quotes made {periodLabel}; recovered is everything booked {periodLabel}.
+          </p>
+        </div>
+      )}
 
       <div>
         <h2 className="mb-3 font-display text-xl font-medium text-ink-900">Follow-up messages</h2>

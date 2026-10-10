@@ -19,6 +19,11 @@ export function SignupForm() {
   const interval = (searchParams.get("interval") as BillingInterval) || "monthly";
   const canceled = searchParams.get("canceled");
 
+  // "associate": a dentist signing up to follow up their own quotes at a
+  // practice they don't own. Nothing is sent until the owner approves.
+  const [accountType, setAccountType] = useState<"practice" | "associate">(
+    searchParams.get("as") === "dentist" ? "associate" : "practice"
+  );
   const [practiceName, setPracticeName] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [email, setEmail] = useState("");
@@ -36,7 +41,7 @@ export function SignupForm() {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ practiceName, ownerName, email, plan, interval }),
+        body: JSON.stringify({ practiceName, ownerName, email, plan, interval, accountType }),
       });
       const data = await res.json();
 
@@ -74,9 +79,44 @@ export function SignupForm() {
       )}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium text-ink-900">I&rsquo;m signing up as</legend>
+          {(
+            [
+              ["practice", "The practice owner or manager", "Follow up quotes for the whole practice."],
+              [
+                "associate",
+                "A dentist at a practice I don't own",
+                "Follow up your own patients' quotes. Messages go out in the practice's name, so the practice owner approves this before anything is sent.",
+              ],
+            ] as const
+          ).map(([value, label, hint]) => (
+            <label
+              key={value}
+              className={`flex cursor-pointer gap-3 rounded-lg border px-4 py-3 text-sm ${accountType === value ? "border-teal-700 bg-teal-50" : "border-ink-900/10"}`}
+            >
+              <input
+                type="radio"
+                name="accountType"
+                value={value}
+                checked={accountType === value}
+                onChange={() => setAccountType(value)}
+                className="mt-0.5 h-4 w-4 accent-teal-700"
+              />
+              <span>
+                <span className="block font-medium text-ink-900">{label}</span>
+                <span className="block text-ink-500">{hint}</span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
         <div>
           <label className="block text-sm font-medium text-ink-900" htmlFor="practiceName">
-            {plan === "solo" ? "Practice or trading name" : "Practice name"}
+            {accountType === "associate"
+              ? "The practice you work at"
+              : plan === "solo"
+                ? "Practice or trading name"
+                : "Practice name"}
           </label>
           <input
             id="practiceName"

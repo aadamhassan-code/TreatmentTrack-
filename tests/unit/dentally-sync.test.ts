@@ -12,6 +12,7 @@ const NOW = new Date("2026-10-10T09:00:00Z");
 function plan(over: Partial<DentallyTreatmentPlan>): DentallyTreatmentPlan {
   return {
     id: 1,
+    practitioner_id: 16,
     completed: false,
     created_at: "2026-10-01T10:00:00Z",
     start_date: "2026-10-01",
@@ -71,6 +72,9 @@ function fakeApi(data: {
       if (updated_after) return data.recentItems ?? [];
       return data.items.filter((i) => String(i.treatment_plan_id) === treatment_plan_id);
     },
+    async listPractitioners() {
+      return [];
+    },
     async getPatient(id) {
       calls.push(`patient ${id}`);
       const p = data.patients.find((x) => String(x.id) === id);
@@ -93,6 +97,7 @@ describe("planDentallySync", () => {
       {
         externalPlanId: "1",
         externalPatientId: "100",
+        externalPractitionerId: "16",
         patientName: "Priya Shah",
         phone: "+447700900201",
         email: "priya@example.com",

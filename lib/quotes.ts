@@ -18,6 +18,8 @@ export interface QuoteInput<K> {
   quotedOn: string;
   /** e.g. the Dentally treatment plan id, so bookings can be matched back. */
   externalId?: string | null;
+  /** The treating dentist's user id, if known. */
+  dentistUserId?: string | null;
 }
 
 export interface SaveQuotesResult<K> {
@@ -161,6 +163,7 @@ export async function saveQuotes<K>(
         status: "in_sequence",
         source,
         external_id: q.externalId ?? null,
+        dentist_user_id: q.dentistUserId ?? null,
         quote_followup_consent_id: consentId,
         created_by: userId,
       }))

@@ -34,7 +34,10 @@ export async function proxy(request: NextRequest) {
   const isAppRoute = request.nextUrl.pathname.startsWith("/dashboard") ||
     request.nextUrl.pathname.startsWith("/treatments") ||
     request.nextUrl.pathname.startsWith("/visits") ||
-    request.nextUrl.pathname.startsWith("/settings");
+    request.nextUrl.pathname.startsWith("/settings") ||
+    request.nextUrl.pathname.startsWith("/reports") ||
+    request.nextUrl.pathname.startsWith("/team") ||
+    request.nextUrl.pathname.startsWith("/approval");
 
   if (isAppRoute && !user) {
     const url = request.nextUrl.clone();

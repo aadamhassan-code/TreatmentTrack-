@@ -25,7 +25,16 @@ const FUTURE_INTENT_OPTIONS = [
   { value: "6", label: "Not ready — remind in 6 months" },
 ];
 
-export function AddTreatmentForm() {
+export function AddTreatmentForm({
+  dentists,
+  lockedToSelf,
+  defaultDentistId,
+}: {
+  dentists: { userId: string; name: string }[];
+  /** Dentist logins always add quotes as themselves. */
+  lockedToSelf: boolean;
+  defaultDentistId: string;
+}) {
   const [state, formAction, pending] = useActionState<AddTreatmentResult, FormData>(
     async (_prev, formData) => addTreatment(formData),
     {}
@@ -121,6 +130,26 @@ export function AddTreatmentForm() {
                 ))}
               </select>
             </div>
+            {!lockedToSelf && dentists.length > 0 && (
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-ink-900" htmlFor="dentistUserId">
+                  Treating dentist <span className="font-normal text-ink-500">(optional)</span>
+                </label>
+                <select
+                  id="dentistUserId"
+                  name="dentistUserId"
+                  defaultValue={defaultDentistId}
+                  className="mt-1.5 w-full rounded-lg border border-ink-900/15 bg-cream-0 px-3.5 py-2.5 text-sm focus:border-teal-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
+                >
+                  <option value="">Not assigned</option>
+                  {dentists.map((d) => (
+                    <option key={d.userId} value={d.userId}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-ink-900" htmlFor="value">
                 Quoted value (£)

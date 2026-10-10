@@ -29,9 +29,12 @@ function age(quotedOn: string): string {
 export function TreatmentsTable({
   treatments,
   mode,
+  dentistNames,
 }: {
   treatments: Treatment[];
   mode: "open" | "closed";
+  /** When given (owners/staff), a Dentist column is shown. */
+  dentistNames?: Record<string, string>;
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +83,7 @@ export function TreatmentsTable({
               {mode === "open" && <th className="w-10 py-3 pl-5 font-medium">#</th>}
               <th className="px-5 py-3 font-medium">Patient</th>
               <th className="px-5 py-3 font-medium">Treatment</th>
+              {dentistNames && <th className="px-5 py-3 font-medium">Dentist</th>}
               <th className="px-5 py-3 text-right font-medium">Value</th>
               <th className="px-5 py-3 font-medium">Quoted</th>
               <th className="px-5 py-3 font-medium">Status</th>
@@ -94,6 +98,11 @@ export function TreatmentsTable({
                 )}
                 <td className="px-5 py-4 text-ink-900">{t.patient?.full_name ?? "—"}</td>
                 <td className="px-5 py-4 text-ink-700">{t.treatment_type}</td>
+                {dentistNames && (
+                  <td className="px-5 py-4 text-ink-700">
+                    {t.dentist_user_id ? (dentistNames[t.dentist_user_id] ?? "Former team member") : "—"}
+                  </td>
+                )}
                 <td className="px-5 py-4 text-right font-mono tabular-nums text-ink-900">
                   {formatGBP(t.value_pence)}
                 </td>

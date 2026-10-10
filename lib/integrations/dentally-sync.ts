@@ -8,6 +8,8 @@ export const FIRST_SYNC_LOOKBACK_DAYS = 90;
 export interface DentallyCandidate {
   externalPlanId: string;
   externalPatientId: string;
+  /** The Dentally practitioner who made the plan, if any. */
+  externalPractitionerId: string | null;
   patientName: string;
   phone: string | null;
   email: string | null;
@@ -112,6 +114,7 @@ export async function planDentallySync(
     candidates.push({
       externalPlanId: id(plan.id),
       externalPatientId: patientId,
+      externalPractitionerId: plan.practitioner_id != null ? id(plan.practitioner_id) : null,
       patientName: [patient.first_name, patient.last_name].filter(Boolean).join(" ").trim() || "Unknown patient",
       phone,
       email: patient.use_email === false ? null : patient.email_address?.trim().toLowerCase() || null,

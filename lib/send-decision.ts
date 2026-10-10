@@ -14,6 +14,8 @@ export interface StepToSend {
   providerConfigured: boolean;
   /** When this message was due (ISO). */
   scheduledFor: string;
+  /** A dentist-first account whose practice owner hasn't approved sending yet. */
+  awaitingOwnerApproval?: boolean;
 }
 
 /** How long a due message waits for its channel to be connected before giving up. */
@@ -61,16 +63,19 @@ export function decideSend(step: StepToSend, now: Date = new Date()): SendDecisi
   const to = step.channel === "email" ? step.patient.email : step.patient.phone;
   if (!to) return { action: "fail", reason: `No ${step.channel} contact on file` };
 
-  // Sending isn't set up yet (e.g. Twilio not connected). Hold the message
-  // for a few days so it goes once it is, rather than failing it outright —
-  // but don't send something weeks late.
-  if (!step.providerConfigured) {
+  // Not ready to send yet: the practice owner hasn't approved a
+  // dentist-first account, or sending isn't set up (e.g. Twilio not
+  // connected). Hold the message for a few days so it goes once things are
+  // ready, rather than failing it outright — but never send it weeks late.
+  const notReady = step.awaitingOwnerApproval
+    ? "the practice owner hadn't approved sending"
+    : !step.providerConfigured
+      ? `${CHANNEL_LABELS[step.channel]} sending wasn't connected`
+      : null;
+  if (notReady) {
     const ageDays = (now.getTime() - Date.parse(step.scheduledFor)) / 86_400_000;
     if (ageDays <= WAIT_FOR_PROVIDER_DAYS) return { action: "wait" };
-    return {
-      action: "fail",
-      reason: `${CHANNEL_LABELS[step.channel]} sending wasn't connected within ${WAIT_FOR_PROVIDER_DAYS} days of this message being due`,
-    };
+    return { action: "fail", reason: `Not sent: ${notReady} within ${WAIT_FOR_PROVIDER_DAYS} days of this message being due` };
   }
 
   return { action: "send", to };

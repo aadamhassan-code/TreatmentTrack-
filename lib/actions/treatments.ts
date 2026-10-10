@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireCurrentPractice } from "@/lib/practice";
+import { listTreatingDentists, requireCurrentPractice } from "@/lib/practice";
 import { scheduleSequence } from "@/lib/sequence";
 import { isTextableNumber, normalizePhone, ukDate } from "@/lib/utils";
 import { OPEN_STATUSES, type TreatmentOutcome } from "@/lib/types";
@@ -17,8 +17,16 @@ export interface AddTreatmentResult {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function addTreatment(formData: FormData): Promise<AddTreatmentResult> {
-  const { userId, practice } = await requireCurrentPractice();
+  const { userId, practice, role } = await requireCurrentPractice();
   const supabase = await createClient();
+
+  // Dentist logins always add quotes as themselves; others may pick anyone
+  // on the team who sees patients.
+  let dentistUserId: string | null = role === "dentist" ? userId : String(formData.get("dentistUserId") ?? "") || null;
+  if (dentistUserId && role !== "dentist") {
+    const allowed = await listTreatingDentists(practice.id);
+    if (!allowed.some((d) => d.userId === dentistUserId)) dentistUserId = null;
+  }
 
   const patientName = String(formData.get("patientName") ?? "").trim();
   const phone = normalizePhone(String(formData.get("phone") ?? "").trim());
@@ -152,6 +160,7 @@ export async function addTreatment(formData: FormData): Promise<AddTreatmentResu
       value_pence: Math.round(valuePounds * 100),
       status: isFutureIntent ? "future_intent" : "in_sequence",
       quoted_on: ukDate(),
+      dentist_user_id: dentistUserId,
       quote_followup_consent_id: quoteConsent.id,
       future_intent_remind_at: futureIntentRemindAt,
       created_by: userId,

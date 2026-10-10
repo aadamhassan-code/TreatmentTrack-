@@ -30,6 +30,7 @@ export interface ReportTreatment {
   status: TreatmentStatus;
   quoted_on: string;
   converted_at: string | null;
+  dentist_user_id?: string | null;
 }
 
 export interface Tally {
@@ -45,6 +46,15 @@ export interface TreatmentTypeRow {
   bookingRate: number | null;
 }
 
+export interface DentistRow {
+  /** null = quotes not assigned to a dentist. */
+  dentistUserId: string | null;
+  quoted: Tally;
+  booked: Tally;
+  bookingRate: number | null;
+  recovered: Tally;
+}
+
 export interface Report {
   quoted: Tally;
   booked: Tally;
@@ -55,6 +65,8 @@ export interface Report {
   /** Booked during the period, whenever the quote was made — matches "Recovered this month". */
   recovered: Tally;
   byTreatment: TreatmentTypeRow[];
+  /** Highest quoted value first. */
+  byDentist: DentistRow[];
 }
 
 const empty = (): Tally => ({ count: 0, valuePence: 0 });
@@ -77,12 +89,23 @@ export function buildReport(treatments: ReportTreatment[], from: string | null):
     bookingRate: null,
     recovered: empty(),
     byTreatment: [],
+    byDentist: [],
   };
   const byType = new Map<string, TreatmentTypeRow>();
+  const byDentist = new Map<string | null, DentistRow>();
+  const dentistRow = (id: string | null) => {
+    let row = byDentist.get(id);
+    if (!row) {
+      row = { dentistUserId: id, quoted: empty(), booked: empty(), bookingRate: null, recovered: empty() };
+      byDentist.set(id, row);
+    }
+    return row;
+  };
 
   for (const t of treatments) {
     if (t.status === "converted" && t.converted_at && (!from || ukDate(t.converted_at) >= from)) {
       add(report.recovered, t.value_pence);
+      add(dentistRow(t.dentist_user_id ?? null).recovered, t.value_pence);
     }
 
     if (from && t.quoted_on < from) continue;
@@ -100,11 +123,18 @@ export function buildReport(treatments: ReportTreatment[], from: string | null):
     }
     add(row.quoted, t.value_pence);
     if (t.status === "converted") add(row.booked, t.value_pence);
+
+    const d = dentistRow(t.dentist_user_id ?? null);
+    add(d.quoted, t.value_pence);
+    if (t.status === "converted") add(d.booked, t.value_pence);
   }
 
   const rate = (booked: Tally, quoted: Tally) => (quoted.count ? booked.count / quoted.count : null);
   report.bookingRate = rate(report.booked, report.quoted);
   report.byTreatment = Array.from(byType.values())
+    .map((r) => ({ ...r, bookingRate: rate(r.booked, r.quoted) }))
+    .sort((a, b) => b.quoted.valuePence - a.quoted.valuePence);
+  report.byDentist = Array.from(byDentist.values())
     .map((r) => ({ ...r, bookingRate: rate(r.booked, r.quoted) }))
     .sort((a, b) => b.quoted.valuePence - a.quoted.valuePence);
 

@@ -13,8 +13,15 @@ const BASE_URLS: Record<DentallyRegion, string> = {
 const MAX_PAGES = 40;
 const PER_PAGE = 100;
 
+export interface DentallyPractitioner {
+  id: number | string;
+  active: boolean;
+  user: { email: string | null; first_name: string | null; last_name: string | null; title: string | null } | null;
+}
+
 export interface DentallyTreatmentPlan {
   id: number | string;
+  practitioner_id: number | string | null;
   completed: boolean;
   created_at: string;
   start_date: string | null;
@@ -61,6 +68,7 @@ export interface DentallyApi {
   listTreatmentPlans(params: { updated_since?: string; completed?: boolean }): Promise<DentallyTreatmentPlan[]>;
   listTreatmentPlanItems(params: { treatment_plan_id?: string; updated_after?: string }): Promise<DentallyTreatmentPlanItem[]>;
   getPatient(id: string): Promise<DentallyPatient>;
+  listPractitioners(): Promise<DentallyPractitioner[]>;
 }
 
 export function createDentallyClient(apiKey: string, region: DentallyRegion = "uk"): DentallyApi {
@@ -120,6 +128,7 @@ export function createDentallyClient(apiKey: string, region: DentallyRegion = "u
     listTreatmentPlans: (params) => list<DentallyTreatmentPlan>("/treatment_plans", "treatment_plans", params),
     listTreatmentPlanItems: (params) =>
       list<DentallyTreatmentPlanItem>("/treatment_plan_items", "treatment_plan_items", params),
+    listPractitioners: () => list<DentallyPractitioner>("/practitioners", "practitioners", {}),
     async getPatient(id) {
       const { patient } = await get<{ patient: DentallyPatient }>(`/patients/${encodeURIComponent(id)}`);
       return patient;

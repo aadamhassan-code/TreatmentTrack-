@@ -44,6 +44,9 @@ export async function POST(request: NextRequest) {
       const interval = metadata.interval as BillingInterval | undefined;
       const customerId = session.customer as string | null;
       const subscriptionId = session.subscription as string | null;
+      // A dentist signing up at a practice they don't own: the account
+      // can't send until that practice's owner approves it.
+      const isAssociate = metadata.account_type === "associate";
 
       if (!practiceName || !ownerEmail || !plan || !interval || !subscriptionId) {
         console.error("checkout.session.completed missing required metadata", session.id);
@@ -73,6 +76,7 @@ export async function POST(request: NextRequest) {
             plan,
             billing_interval: interval,
             status: "active",
+            requires_owner_approval: isAssociate,
           })
           .select("id")
           .single();
@@ -118,6 +122,8 @@ export async function POST(request: NextRequest) {
         practice_id: practiceId,
         user_id: ownerId,
         role: "owner",
+        display_name: isAssociate ? ownerName : null,
+        treats_patients: isAssociate,
       });
 
       if (memberError) {

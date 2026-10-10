@@ -15,9 +15,15 @@ interface DueStep {
   treatment: {
     treatment_type: string;
     status: string;
+    dentist_user_id: string | null;
     patient: { full_name: string; phone: string; email: string | null; opted_out_at: string | null };
   } | null;
-  practice: { name: string; status: string } | null;
+  practice: {
+    name: string;
+    status: string;
+    requires_owner_approval: boolean;
+    owner_approved_at: string | null;
+  } | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -30,7 +36,7 @@ export async function GET(request: NextRequest) {
   const { data: dueSteps, error } = await supabase
     .from("sequence_steps")
     .select(
-      "id, practice_id, step, channel, scheduled_for, treatment:treatments(treatment_type, status, patient:patients(full_name, phone, email, opted_out_at)), practice:practices(name, status)"
+      "id, practice_id, step, channel, scheduled_for, treatment:treatments(treatment_type, status, dentist_user_id, patient:patients(full_name, phone, email, opted_out_at)), practice:practices(name, status, requires_owner_approval, owner_approved_at)"
     )
     .eq("status", "pending")
     .lte("scheduled_for", new Date().toISOString());
@@ -57,6 +63,13 @@ export async function GET(request: NextRequest) {
 
   const settingsMap = new Map((practiceSettings ?? []).map((s) => [s.practice_id, s]));
 
+  // Names for {dentistName}, as set on each practice's Team page.
+  const { data: members } = await supabase
+    .from("practice_members")
+    .select("practice_id, user_id, display_name")
+    .in("practice_id", practiceIds);
+  const dentistNames = new Map((members ?? []).map((m) => [`${m.practice_id}:${m.user_id}`, m.display_name as string | null]));
+
   const templateMap = new Map(
     (templates ?? []).map((t) => [`${t.practice_id}:${t.step}:${t.channel}`, t.body])
   );
@@ -78,6 +91,7 @@ export async function GET(request: NextRequest) {
       hasTemplate: Boolean(template),
       providerConfigured: getProvider(step.channel).isConfigured(),
       scheduledFor: step.scheduled_for,
+      awaitingOwnerApproval: Boolean(step.practice?.requires_owner_approval && !step.practice.owner_approved_at),
     });
 
     if (decision.action === "wait") {
@@ -111,6 +125,9 @@ export async function GET(request: NextRequest) {
       patientName: step.treatment!.patient.full_name,
       treatmentType: step.treatment!.treatment_type,
       practiceName: step.practice!.name,
+      dentistName: step.treatment!.dentist_user_id
+        ? dentistNames.get(`${step.practice_id}:${step.treatment!.dentist_user_id}`)
+        : null,
     });
     const body = ensureOptOutText(rendered, step.channel);
 

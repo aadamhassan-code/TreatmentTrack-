@@ -51,6 +51,23 @@ describe("buildReport", () => {
     ]);
   });
 
+  test("breaks down by dentist, including quotes not assigned to anyone", () => {
+    const r = buildReport(
+      [
+        t({ dentist_user_id: "a", value_pence: 3000_00, status: "converted", converted_at: "2026-10-05T10:00:00Z" }),
+        t({ dentist_user_id: "a", value_pence: 1000_00 }),
+        t({ dentist_user_id: "b", value_pence: 500_00 }),
+        t({ value_pence: 200_00 }),
+      ],
+      "2026-10-01"
+    );
+    expect(r.byDentist.map((d) => [d.dentistUserId, d.quoted.count, d.booked.count, d.bookingRate, d.recovered.valuePence])).toEqual([
+      ["a", 2, 1, 0.5, 3000_00],
+      ["b", 1, 0, 0, 0],
+      [null, 1, 0, 0, 0],
+    ]);
+  });
+
   test("all time includes everything", () => {
     expect(buildReport(rows, null).quoted.count).toBe(5);
   });

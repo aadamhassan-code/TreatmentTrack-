@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireCurrentPractice } from "@/lib/practice";
-import { parseImport, type ImportRow } from "@/lib/import";
+import { listTreatingDentists, requireCurrentPractice } from "@/lib/practice";
+import { normaliseDentistName, parseImport, type ImportRow } from "@/lib/import";
 import { saveQuotes } from "@/lib/quotes";
 import { ukDate } from "@/lib/utils";
 
@@ -23,7 +23,7 @@ const MAX_FILE_CHARS = 900_000;
  * Treatment, so the database's consent checks apply unchanged.
  */
 export async function importTreatments(csvText: string, optOutConfirmed: boolean): Promise<ImportResult> {
-  const { userId, practice } = await requireCurrentPractice();
+  const { userId, practice, role } = await requireCurrentPractice();
   const supabase = await createClient();
 
   if (!optOutConfirmed) {
@@ -45,10 +45,23 @@ export async function importTreatments(csvText: string, optOutConfirmed: boolean
   const skip = (row: ImportRow, reason: string) =>
     skipped.push({ line: row.line, patientName: row.patientName, reason });
 
-  const valid: ImportRow[] = [];
+  // Who each quote belongs to: a Dentist login's imports are always theirs;
+  // otherwise an optional dentist column is matched to the team's names.
+  const dentists = await listTreatingDentists(practice.id);
+  const byName = new Map(dentists.map((d) => [normaliseDentistName(d.name), d.userId]));
+  const dentistFor = (row: ImportRow): string | null | undefined => {
+    if (role === "dentist") return userId;
+    if (!row.dentistName) return null;
+    return byName.get(normaliseDentistName(row.dentistName));
+  };
+
+  const valid: (ImportRow & { dentistUserId: string | null })[] = [];
   for (const row of rows) {
+    const dentistUserId = dentistFor(row);
     if (row.errors.length) skip(row, row.errors.join("; "));
-    else valid.push(row);
+    else if (dentistUserId === undefined) {
+      skip(row, `"${row.dentistName}" doesn't match a dentist on your team — check the name on the Team page`);
+    } else valid.push({ ...row, dentistUserId });
   }
 
   const result = await saveQuotes(supabase, {

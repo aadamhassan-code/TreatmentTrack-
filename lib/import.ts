@@ -10,7 +10,7 @@ export const TEMPLATE_CSV =
   "Fatima Ahmed,07700 900123,fatima@example.com,Dental implant,2400,01/10/2026,yes\n" +
   "James Wilson,07700 900456,,Invisalign,3200,15/09/2026,yes\n";
 
-type Field = "patientName" | "phone" | "email" | "treatmentType" | "value" | "quoteDate" | "optOutOffered";
+type Field = "patientName" | "phone" | "email" | "treatmentType" | "value" | "quoteDate" | "optOutOffered" | "dentist";
 
 // Header names we recognise, after lower-casing and removing spaces/punctuation.
 const HEADER_ALIASES: Record<Field, string[]> = {
@@ -21,6 +21,7 @@ const HEADER_ALIASES: Record<Field, string[]> = {
   value: ["value", "quotedvalue", "quotevalue", "amount", "price", "fee", "total", "cost"],
   quoteDate: ["quotedate", "quotedon", "date", "datequoted", "plandate"],
   optOutOffered: ["optoutoffered", "optout", "consent", "softoptin"],
+  dentist: ["dentist", "clinician", "practitioner", "treatingdentist", "provider"],
 };
 
 const REQUIRED: { field: Field; label: string }[] = [
@@ -40,6 +41,8 @@ export interface ImportRow {
   valuePence: number;
   /** "YYYY-MM-DD" */
   quotedOn: string;
+  /** As written in the file's dentist column, if it has one. */
+  dentistName: string | null;
   errors: string[];
 }
 
@@ -169,9 +172,18 @@ export function parseImport(text: string, today: string): ParsedImport {
       treatmentType,
       valuePence: valuePence ?? 0,
       quotedOn: quotedOn ?? today,
+      dentistName: cell(r, "dentist") || null,
       errors,
     };
   });
 
   return { fileErrors: [], rows };
+}
+
+/** "Dr. Sam Patel" and "sam patel" match; titles, dots and case are ignored. */
+export function normaliseDentistName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\b(dr|mr|mrs|ms|miss|mx|prof)\b\.?/g, "")
+    .replace(/[^a-z]/g, "");
 }

@@ -1,7 +1,9 @@
 import { Card, CardBody } from "@/components/ui/card";
 import { requireOwner } from "@/lib/practice";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { InviteForm, MemberActions, AddLocationForm } from "@/components/team/team-forms";
+import { InviteForm, MemberActions, MemberDetails, AddLocationForm } from "@/components/team/team-forms";
+import { decryptSecret } from "@/lib/crypto";
+import { createDentallyClient, type DentallyRegion } from "@/lib/integrations/dentally";
 
 const PLAN_LABELS: Record<string, string> = {
   solo: "Solo",
@@ -20,7 +22,7 @@ export default async function TeamPage() {
   const [{ data: members }, { data: locations }] = await Promise.all([
     admin
       .from("practice_members")
-      .select("id, user_id, role, created_at")
+      .select("id, user_id, role, created_at, display_name, treats_patients, dentally_practitioner_id")
       .eq("practice_id", practice.id)
       .order("created_at"),
     admin
@@ -41,6 +43,29 @@ export default async function TeamPage() {
     })
   );
 
+  // If Dentally is connected, list its practitioners so an owner can link
+  // a team member whose email differs between the two systems.
+  let practitioners: { id: string; name: string }[] | null = null;
+  const { data: dentally } = await admin
+    .from("integrations")
+    .select("region, encrypted_api_key")
+    .eq("practice_id", practice.id)
+    .eq("provider", "dentally")
+    .maybeSingle();
+  if (dentally) {
+    try {
+      const list = await createDentallyClient(decryptSecret(dentally.encrypted_api_key), dentally.region as DentallyRegion).listPractitioners();
+      practitioners = list
+        .filter((p) => p.active)
+        .map((p) => ({
+          id: String(p.id),
+          name: [p.user?.title, p.user?.first_name, p.user?.last_name].filter(Boolean).join(" ") || `Practitioner ${p.id}`,
+        }));
+    } catch {
+      practitioners = null;
+    }
+  }
+
   const plan = locations?.find((l) => l.id === rootId)?.plan ?? practice.plan;
   const limit = plan === "multisite" ? 5 : plan === "enterprise" ? null : 1;
   const locationCount = locations?.length ?? 1;
@@ -59,7 +84,9 @@ export default async function TeamPage() {
           <p className="mt-1 text-sm text-ink-500">
             <strong>Owners</strong> can do everything, including Settings, message templates, this page and
             adding locations. <strong>Staff</strong> can use the dashboard, add and import quotes, log
-            visits and see reports.
+            visits and see reports. <strong>Dentists</strong> see and manage only their own quotes and
+            figures. Tick <em>Sees patients</em> for owners or staff who also treat, so quotes can be assigned
+            to them.
           </p>
         </div>
         <Card>
@@ -68,14 +95,23 @@ export default async function TeamPage() {
               <div key={m.id} className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
                 <div>
                   <p className="text-sm font-medium text-ink-900">
+                    {m.display_name ? `${m.display_name} · ` : ""}
                     {m.email}
                     {m.user_id === userId && <span className="ml-2 text-xs font-normal text-ink-500">(you)</span>}
                   </p>
                   {m.pending && <p className="text-xs text-ink-500">Invited — hasn&rsquo;t signed in yet</p>}
+                  <MemberDetails
+                    memberId={m.id}
+                    role={m.role as "owner" | "staff" | "dentist"}
+                    displayName={m.display_name}
+                    treatsPatients={m.treats_patients}
+                    dentallyPractitionerId={m.dentally_practitioner_id}
+                    practitioners={practitioners}
+                  />
                 </div>
                 <MemberActions
                   memberId={m.id}
-                  role={m.role as "owner" | "staff"}
+                  role={m.role as "owner" | "staff" | "dentist"}
                   isSelf={m.user_id === userId}
                 />
               </div>

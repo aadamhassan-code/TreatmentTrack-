@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { listMyPractices, requireCurrentPractice } from "@/lib/practice";
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 
 export default async function AppLayout({
   children,
@@ -32,6 +33,19 @@ export default async function AppLayout({
         dentallyPending={dentally ? (dentallyPending ?? 0) : null}
       />
       <div className="min-w-0 flex-1 bg-cream-50">
+        {practice.requires_owner_approval && !practice.owner_approved_at && (
+          <div className="border-b border-gold-500/30 bg-gold-100 px-4 py-3 text-sm text-ink-900 sm:px-8">
+            <strong>Follow-up messages are on hold</strong> until the owner of {practice.name} approves this
+            account, because they go out in the practice&rsquo;s name.{" "}
+            {role === "owner" ? (
+              <Link href="/approval" className="font-medium text-teal-800 underline">
+                Ask for approval
+              </Link>
+            ) : (
+              "The account holder can ask for approval."
+            )}
+          </div>
+        )}
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10">{children}</div>
       </div>
     </div>

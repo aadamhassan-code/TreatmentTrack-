@@ -1,7 +1,7 @@
 import "server-only";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { decryptSecret } from "@/lib/crypto";
-import { createDentallyClient, DentallyError, type DentallyRegion } from "@/lib/integrations/dentally";
+import { createDentallyClient, DentallyError, type DentallyApi, type DentallyRegion } from "@/lib/integrations/dentally";
 import { planDentallySync } from "@/lib/integrations/dentally-sync";
 import { OPEN_STATUSES } from "@/lib/types";
 
@@ -20,6 +20,45 @@ export interface SyncSummary {
   error?: string;
   newCandidates: number;
   autoBooked: number;
+}
+
+/**
+ * Works out which TreatmentTrack team member each Dentally practitioner is:
+ * an owner's explicit link on the Team page first, otherwise matching
+ * email addresses. Only people quotes can be assigned to are considered.
+ */
+async function practitionerToDentist(
+  admin: Admin,
+  api: DentallyApi,
+  practiceId: string,
+  practitionerIds: string[]
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  if (practitionerIds.length === 0) return map;
+
+  const { data: members } = await admin
+    .from("practice_members")
+    .select("user_id, role, treats_patients, dentally_practitioner_id")
+    .eq("practice_id", practiceId);
+  const treating = (members ?? []).filter((m) => m.role === "dentist" || m.treats_patients);
+
+  for (const m of treating) if (m.dentally_practitioner_id) map.set(String(m.dentally_practitioner_id), m.user_id);
+  const unmatched = practitionerIds.filter((p) => !map.has(p));
+  if (unmatched.length === 0) return map;
+
+  const emails = new Map<string, string>();
+  for (const m of treating.filter((m) => !m.dentally_practitioner_id)) {
+    const { data } = await admin.auth.admin.getUserById(m.user_id);
+    if (data.user?.email) emails.set(data.user.email.toLowerCase(), m.user_id);
+  }
+  if (emails.size === 0) return map;
+
+  for (const p of await api.listPractitioners()) {
+    const email = p.user?.email?.toLowerCase();
+    const userId = email ? emails.get(email) : undefined;
+    if (userId && unmatched.includes(String(p.id))) map.set(String(p.id), userId);
+  }
+  return map;
 }
 
 export function friendlyDentallyError(e: unknown): string {
@@ -48,6 +87,12 @@ export async function runDentallySync(admin: Admin, integration: IntegrationRow,
     const api = createDentallyClient(decryptSecret(integration.encrypted_api_key), integration.region);
     const plan = await planDentallySync(api, { since: integration.last_synced_at, now });
     const practiceId = integration.practice_id;
+    const dentistFor = await practitionerToDentist(
+      admin,
+      api,
+      practiceId,
+      Array.from(new Set(plan.candidates.map((c) => c.externalPractitionerId).filter((p): p is string => !!p)))
+    );
 
     // Candidates: add new ones; refresh details of ones still waiting for
     // review; never resurrect ones staff already started or dismissed.
@@ -76,6 +121,8 @@ export async function runDentallySync(admin: Admin, integration: IntegrationRow,
         value_pence: c.valuePence,
         quoted_on: c.quotedOn,
         blocked_reason: c.blockedReason,
+        external_practitioner_id: c.externalPractitionerId,
+        dentist_user_id: c.externalPractitionerId ? (dentistFor.get(c.externalPractitionerId) ?? null) : null,
       };
       const status = existingStatus.get(c.externalPlanId);
       if (!status) {

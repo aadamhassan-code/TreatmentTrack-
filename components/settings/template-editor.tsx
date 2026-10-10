@@ -19,7 +19,7 @@ const CHANNELS: { value: Channel; label: string }[] = [
   { value: "email", label: "Email" },
 ];
 
-const VARIABLES = ["{patientName}", "{treatmentType}", "{practiceName}"];
+const VARIABLES = ["{patientName}", "{treatmentType}", "{practiceName}", "{dentistName}"];
 
 export function TemplateEditor({
   templates,

@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Plan, BillingInterval } from "@/lib/types";
 
-export type Role = "owner" | "staff";
+/** owner: everything. staff: all day-to-day work. dentist: only their own quotes. */
+export type Role = "owner" | "staff" | "dentist";
 
 export interface CurrentPractice {
   id: string;
@@ -15,9 +16,14 @@ export interface CurrentPractice {
   status: string;
   /** Set when this is an extra location billed under another practice. */
   billing_practice_id: string | null;
+  /** Dentist-first account: sends nothing until the practice owner approves. */
+  requires_owner_approval: boolean;
+  owner_approved_at: string | null;
+  owner_approved_by_name: string | null;
 }
 
-const PRACTICE_COLUMNS = "id, name, slug, plan, billing_interval, status, billing_practice_id";
+const PRACTICE_COLUMNS =
+  "id, name, slug, plan, billing_interval, status, billing_practice_id, requires_owner_approval, owner_approved_at, owner_approved_by_name";
 
 /**
  * Resolves the signed-in user's current practice (the one they last switched
@@ -30,6 +36,9 @@ export const requireCurrentPractice = cache(async (): Promise<{
   userId: string;
   practice: CurrentPractice;
   role: Role;
+  /** Whether quotes can be assigned to this person (always true for dentists). */
+  treatsPatients: boolean;
+  displayName: string | null;
 }> => {
   const supabase = await createClient();
 
@@ -45,7 +54,7 @@ export const requireCurrentPractice = cache(async (): Promise<{
     supabase.from("practices").select(PRACTICE_COLUMNS).eq("id", practiceId).maybeSingle(),
     supabase
       .from("practice_members")
-      .select("role")
+      .select("role, display_name, treats_patients")
       .eq("practice_id", practiceId)
       .eq("user_id", user.id)
       .maybeSingle(),
@@ -53,7 +62,13 @@ export const requireCurrentPractice = cache(async (): Promise<{
 
   if (!practice || !membership) redirect("/login");
 
-  return { userId: user.id, practice: practice as CurrentPractice, role: membership.role as Role };
+  return {
+    userId: user.id,
+    practice: practice as CurrentPractice,
+    role: membership.role as Role,
+    treatsPatients: membership.role === "dentist" || membership.treats_patients,
+    displayName: membership.display_name,
+  };
 });
 
 /** For owner-only pages and actions. Staff are sent back to the dashboard. */
@@ -68,4 +83,26 @@ export async function listMyPractices(): Promise<{ id: string; name: string }[]>
   const supabase = await createClient();
   const { data } = await supabase.from("practices").select("id, name").order("name");
   return data ?? [];
+}
+
+export interface TreatingDentist {
+  userId: string;
+  name: string;
+}
+
+/**
+ * Everyone quotes can be assigned to in the current practice: Dentist
+ * logins, plus owners/staff marked as seeing patients. Names come from the
+ * Team page ("Dr Patel"); anyone without one is listed as "Unnamed dentist".
+ */
+export async function listTreatingDentists(practiceId: string): Promise<TreatingDentist[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("practice_members")
+    .select("user_id, role, display_name, treats_patients")
+    .eq("practice_id", practiceId);
+  return (data ?? [])
+    .filter((m) => m.role === "dentist" || m.treats_patients)
+    .map((m) => ({ userId: m.user_id as string, name: (m.display_name as string | null)?.trim() || "Unnamed dentist" }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }

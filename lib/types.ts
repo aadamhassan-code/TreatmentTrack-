@@ -63,7 +63,9 @@ export interface Treatment {
   lost_at: string | null;
   /** The date the patient was quoted (can be before it was entered, e.g. imports). */
   quoted_on: string;
-  source: "manual" | "csv_import";
+  source: "manual" | "csv_import" | "dentally";
+  external_id: string | null;
+  dentist_user_id: string | null;
   // joined
   patient?: Patient;
   sequence_steps?: { status: string; error: string | null }[];

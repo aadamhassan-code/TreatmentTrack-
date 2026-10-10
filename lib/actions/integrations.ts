@@ -155,6 +155,7 @@ export async function startDentallyQuotes(ids: string[], optOutConfirmed: boolea
         valuePence: r.value_pence,
         quotedOn: r.quoted_on,
         externalId: r.external_plan_id,
+        dentistUserId: r.dentist_user_id ?? null,
       })),
   });
   if (result.error) return { error: result.error };

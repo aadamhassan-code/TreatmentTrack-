@@ -11,7 +11,7 @@ export const emailProvider: MessageProvider = {
     return Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL);
   },
 
-  async send({ to, body }: SendMessageInput): Promise<SendMessageResult> {
+  async send({ to, body, subject }: SendMessageInput): Promise<SendMessageResult> {
     if (!this.isConfigured()) {
       return { ok: false, error: "Email sending is not connected yet." };
     }
@@ -26,7 +26,7 @@ export const emailProvider: MessageProvider = {
         body: JSON.stringify({
           from: process.env.RESEND_FROM_EMAIL,
           to,
-          subject: "About your treatment quote",
+          subject: subject ?? "About your treatment quote",
           text: body,
         }),
       });

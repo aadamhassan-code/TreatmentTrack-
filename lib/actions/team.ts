@@ -13,7 +13,7 @@ export interface TeamActionResult {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ROLES: readonly Role[] = ["owner", "staff"];
+const ROLES: readonly Role[] = ["owner", "staff", "dentist"];
 
 function siteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -29,9 +29,13 @@ export async function inviteTeamMember(formData: FormData): Promise<TeamActionRe
   const { practice } = await requireOwner();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const role = String(formData.get("role") ?? "staff") as Role;
+  const displayName = String(formData.get("displayName") ?? "").trim() || null;
 
   if (!EMAIL_RE.test(email)) return { error: "Please enter a valid email address." };
   if (!ROLES.includes(role)) return { error: "Please choose a role." };
+  if (role === "dentist" && !displayName) {
+    return { error: "Please enter how this dentist should be named, e.g. Dr Patel." };
+  }
 
   const admin = createAdminClient();
   let userId = await findAuthUserIdByEmail(admin, email);
@@ -59,7 +63,7 @@ export async function inviteTeamMember(formData: FormData): Promise<TeamActionRe
 
   const { error } = await admin
     .from("practice_members")
-    .insert({ practice_id: practice.id, user_id: userId, role });
+    .insert({ practice_id: practice.id, user_id: userId, role, display_name: displayName, treats_patients: role === "dentist" });
 
   if (error) {
     if (error.code === "23505") return { error: `${email} is already on this practice's team.` };
@@ -205,4 +209,40 @@ export async function addLocation(formData: FormData): Promise<TeamActionResult>
 
   revalidatePath("/", "layout");
   return { message: `${name} has been added. Use the practice switcher to start working in it.` };
+}
+
+/**
+ * Owner edits how a team member appears ("Dr Patel"), whether quotes can be
+ * assigned to them, and (optionally) which Dentally practitioner they are
+ * when their emails don't match.
+ */
+export async function updateMemberDetails(
+  memberId: string,
+  details: { displayName: string; treatsPatients: boolean; dentallyPractitionerId: string | null }
+): Promise<TeamActionResult> {
+  const { practice } = await requireOwner();
+  const admin = createAdminClient();
+  const { data: member } = await admin
+    .from("practice_members")
+    .select("id, role")
+    .eq("id", memberId)
+    .eq("practice_id", practice.id)
+    .maybeSingle();
+  if (!member) return { error: "That person isn't on this practice's team." };
+
+  const displayName = details.displayName.trim() || null;
+  if (member.role === "dentist" && !displayName) return { error: "Dentists need a name, e.g. Dr Patel." };
+
+  const { error } = await admin
+    .from("practice_members")
+    .update({
+      display_name: displayName,
+      treats_patients: member.role === "dentist" ? true : details.treatsPatients,
+      dentally_practitioner_id: details.dentallyPractitionerId || null,
+    })
+    .eq("id", member.id);
+  if (error) return { error: "Couldn't save those details. Please try again." };
+
+  revalidatePath("/team");
+  return { message: "Saved." };
 }

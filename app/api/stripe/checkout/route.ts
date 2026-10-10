@@ -18,7 +18,8 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { practiceName, ownerName, email, plan, interval } = body as {
+  const { practiceName, ownerName, email, plan, interval, accountType } = body as {
+    accountType?: "practice" | "associate";
     practiceName?: string;
     ownerName?: string;
     email?: string;
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
       owner_email: email,
       plan,
       interval,
+      account_type: accountType === "associate" ? "associate" : "practice",
     },
     subscription_data: {
       metadata: { plan, interval },

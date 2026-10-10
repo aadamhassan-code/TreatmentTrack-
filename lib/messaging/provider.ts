@@ -1,6 +1,8 @@
 export interface SendMessageInput {
   to: string;
   body: string;
+  /** Email only; defaults to the follow-up subject line. */
+  subject?: string;
 }
 
 export interface SendMessageResult {

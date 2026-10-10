@@ -53,7 +53,7 @@ export function Sidebar({
   practiceId: string;
   practiceName: string;
   practices: { id: string; name: string }[];
-  role: "owner" | "staff";
+  role: "owner" | "staff" | "dentist";
   /** null when Dentally isn't connected (the link is hidden). */
   dentallyPending: number | null;
 }) {
@@ -99,7 +99,8 @@ export function Sidebar({
               (!l.ownerOnly || role === "owner") &&
               (!l.dentally || dentallyPending !== null),
           )
-          .map(({ href, label, icon: Icon, dentally }) => {
+          .map(({ href, label: baseLabel, icon: Icon, dentally }) => {
+            const label = role === "dentist" && href === "/dashboard" ? "My quotes" : role === "dentist" && href === "/reports" ? "My reports" : baseLabel;
             const active = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
