@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireOwner } from "@/lib/practice";
 import type { Channel, SequenceStep } from "@/lib/types";
+import { scheduleProblem } from "@/lib/schedule";
 
 export async function updateChannelSettings(formData: FormData) {
   const { practice } = await requireOwner();
@@ -56,4 +57,25 @@ export async function saveTemplates(entries: TemplateEntry[]) {
       .eq("channel", e.channel);
   }
   revalidatePath("/settings");
+}
+
+/**
+ * Owner sets how many follow-up messages go and when (days after the
+ * quote). Applies to quotes added from now on; quotes already part-way
+ * through keep the messages they were given.
+ */
+export async function updateSequenceDays(days: number[]): Promise<{ error?: string }> {
+  const { practice } = await requireOwner();
+  const problem = scheduleProblem(days);
+  if (problem) return { error: problem };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("settings")
+    .update({ sequence_days: days, updated_at: new Date().toISOString() })
+    .eq("practice_id", practice.id);
+  if (error) return { error: "Couldn't save the schedule. Please try again." };
+
+  revalidatePath("/settings");
+  return {};
 }

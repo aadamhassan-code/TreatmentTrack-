@@ -6,7 +6,7 @@ const problems = [
 
 const solutions = [
   "Every declined quote gets logged once, with consent captured at that exact moment — then it follows up itself.",
-  "A fixed Day 3 / 7 / 14 / 30 sequence across SMS, WhatsApp and email, in your practice's own words, until the patient books or opts out.",
+  "Follow-ups on a schedule you choose — up to six messages across SMS, WhatsApp and email, in your practice's own words — paused when the patient asks, stopped when they book or opt out.",
   "One dashboard shows exactly how much quoted treatment is still open, and how much you've recovered this month, in pounds.",
 ];
 

@@ -54,7 +54,7 @@ describe("owner and staff roles", () => {
     await expect(
       asUser(db, staffId, (tx) =>
         tx.query(
-          "insert into message_templates (practice_id, step, channel, body) values ($1, 'day_3', 'whatsapp', 'x')",
+          "insert into message_templates (practice_id, step, channel, body) values ($1, 1, 'whatsapp', 'x')",
           [practice.practiceId]
         )
       )
@@ -65,7 +65,7 @@ describe("owner and staff roles", () => {
     const practice = await seedPractice(db);
     await asUser(db, practice.userId, async (tx) => {
       expect((await tx.query("update settings set sms_enabled = false")).affectedRows).toBe(1);
-      expect((await tx.query("update message_templates set body = 'x' where step = 'day_3'")).affectedRows).toBe(2);
+      expect((await tx.query("update message_templates set body = 'x' where step = 1")).affectedRows).toBe(2);
     });
   });
 

@@ -23,6 +23,7 @@ const FUTURE_INTENT_OPTIONS = [
   { value: "1", label: "Not ready — remind in 1 month" },
   { value: "3", label: "Not ready — remind in 3 months" },
   { value: "6", label: "Not ready — remind in 6 months" },
+  { value: "date", label: "Not ready — start on a date I choose (e.g. after Christmas)" },
 ];
 
 export function AddTreatmentForm({
@@ -225,6 +226,23 @@ export function AddTreatmentForm({
                 {opt.label}
               </label>
             ))}
+            {futureIntent === "date" && (
+              <div className="pl-7">
+                <label className="block text-sm font-medium text-ink-900" htmlFor="futureIntentDate">
+                  Start follow-up on
+                </label>
+                <input
+                  id="futureIntentDate"
+                  name="futureIntentDate"
+                  type="date"
+                  required
+                  className="mt-1.5 rounded-lg border border-ink-900/15 bg-cream-0 px-3.5 py-2 text-sm"
+                />
+                <p className="mt-1 text-xs text-ink-500">
+                  Nothing is sent before then. On that day the first message goes, and the rest follow your schedule.
+                </p>
+              </div>
+            )}
           </div>
         </CardBody>
       </Card>

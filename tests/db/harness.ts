@@ -123,7 +123,7 @@ export async function seedTreatment(
     );
     await tx.query(
       `insert into sequence_steps (treatment_id, practice_id, step, channel, scheduled_for)
-       values ($1, $2, 'day_3', 'sms', now()), ($1, $2, 'day_7', 'sms', now() + interval '4 days')`,
+       values ($1, $2, 1, 'sms', now()), ($1, $2, 2, 'sms', now() + interval '4 days')`,
       [treatment.id, practiceId]
     );
     return { patientId: patient.id, consentId: consent.id, treatmentId: treatment.id };

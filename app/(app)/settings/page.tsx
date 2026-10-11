@@ -2,6 +2,8 @@ import { Card, CardBody } from "@/components/ui/card";
 import { IntegrationRow } from "@/components/settings/integration-status";
 import { ChannelSettingsForm } from "@/components/settings/channel-settings-form";
 import { TemplateEditor } from "@/components/settings/template-editor";
+import { ScheduleEditor } from "@/components/settings/schedule-editor";
+import { DEFAULT_SEQUENCE_DAYS } from "@/lib/schedule";
 import { DentallyConnection, type DentallyIntegrationInfo } from "@/components/settings/dentally-connection";
 import { isDentallyIntegrationEnabled } from "@/lib/integrations/dentally";
 import { requireCurrentPractice } from "@/lib/practice";
@@ -31,6 +33,8 @@ export default async function SettingsPage() {
       .maybeSingle(),
   ]);
 
+  const sequenceDays: number[] = (settings as Settings | null)?.sequence_days ?? DEFAULT_SEQUENCE_DAYS;
+
   const templateEntries = (templates ?? []) as {
     step: SequenceStep;
     channel: Channel;
@@ -57,7 +61,7 @@ export default async function SettingsPage() {
           <CardBody>
             <IntegrationRow
               name="Twilio (SMS)"
-              description="Sends the Day 3/7/14/30 SMS sequence."
+              description="Sends your follow-up messages by text."
               connected={twilioSmsProvider.isConfigured()}
               hint="Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_FROM_NUMBER."
             />
@@ -145,10 +149,20 @@ export default async function SettingsPage() {
       </section>
 
       <section>
+        <h2 className="mb-1 font-display text-xl font-medium text-ink-900">Follow-up schedule</h2>
+        <p className="mb-3 text-sm text-ink-500">How many messages each patient gets, and when.</p>
+        <Card>
+          <CardBody>
+            <ScheduleEditor initialDays={sequenceDays} readOnly={readOnly} />
+          </CardBody>
+        </Card>
+      </section>
+
+      <section>
         <h2 className="mb-3 font-display text-xl font-medium text-ink-900">
           Message templates
         </h2>
-        <TemplateEditor templates={templateEntries} readOnly={readOnly} />
+        <TemplateEditor templates={templateEntries} sequenceDays={sequenceDays} readOnly={readOnly} />
       </section>
     </div>
   );

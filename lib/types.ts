@@ -10,7 +10,8 @@ export type ConsentCategory = "quote_followup" | "cross_sell";
 
 export type Channel = "sms" | "whatsapp" | "email";
 
-export type SequenceStep = "day_3" | "day_7" | "day_14" | "day_30";
+/** Message number in the practice's follow-up schedule (1–6). */
+export type SequenceStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 export type VisitType = "hygiene" | "extraction" | "other";
 
@@ -86,5 +87,7 @@ export interface Settings {
   sms_enabled: boolean;
   whatsapp_enabled: boolean;
   email_enabled: boolean;
+  /** Days after the quote for each follow-up message, e.g. [3, 7, 14, 30]. */
+  sequence_days: number[];
   updated_at: string;
 }

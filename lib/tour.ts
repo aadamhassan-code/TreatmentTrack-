@@ -45,8 +45,8 @@ export function tourSteps(ctx: TourContext): TourStep[] {
     target: "nav-/treatments/new",
     title: "Add a quote",
     body: dentist
-      ? "Click Add treatment when one of your patients is quoted but doesn't book. Enter their details, confirm they were offered an opt-out, and polite follow-ups go out automatically on days 3, 7, 14 and 30."
-      : "Click Add treatment when a patient is quoted but doesn't book. Enter their details, confirm they were offered an opt-out, and polite follow-ups go out automatically on days 3, 7, 14 and 30.",
+      ? "Click Add treatment when one of your patients is quoted but doesn't book. Enter their details, confirm they were offered an opt-out, and polite follow-ups go out automatically on your schedule. If they say \"not until after Christmas\", choose a start date."
+      : "Click Add treatment when a patient is quoted but doesn't book. Enter their details, confirm they were offered an opt-out, and polite follow-ups go out automatically on your schedule. If they say \"not until after Christmas\", choose a start date.",
   });
 
   steps.push({
@@ -72,7 +72,7 @@ export function tourSteps(ctx: TourContext): TourStep[] {
   steps.push({
     target: "outcome-buttons",
     title: "When the patient decides",
-    body: "Click Booked, Declined or Lost and their follow-up messages stop straight away. Clicked the wrong one? Reopen it from Recently closed.",
+    body: "Click Booked, Declined or Lost and their follow-up messages stop straight away. If they want to wait — \"after Christmas\" — click Pause… and pick a date. Clicked the wrong one? Reopen it from Recently closed.",
   });
 
   steps.push({
@@ -107,7 +107,7 @@ export function tourSteps(ctx: TourContext): TourStep[] {
     steps.push({
       target: "nav-/settings",
       title: "Messages and channels",
-      body: "In Settings choose text and/or email, and change the wording of each message. An opt-out is always added for you.",
+      body: "In Settings choose when messages go (e.g. 3 days, 1 week, 1 month), text and/or email, and the wording of each message. An opt-out is always added for you.",
     });
     steps.push({
       target: "nav-/team",

@@ -16,7 +16,7 @@ const plans = [
     features: [
       "Up to 30 active quoted treatments/month",
       "SMS + email follow-up sequences",
-      "Day 3 / 7 / 14 / 30 automated sequence",
+      "Automated follow-up on your own schedule",
       "Dual consent capture with timestamped audit trail",
       "1 user login",
     ],

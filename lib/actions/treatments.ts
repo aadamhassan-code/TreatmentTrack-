@@ -36,9 +36,9 @@ export async function addTreatment(formData: FormData): Promise<AddTreatmentResu
   const valuePounds = Number(formData.get("value") ?? 0);
   const quoteFollowupOffered = formData.get("quoteFollowupOffered") === "on";
   const crossSellConsent = formData.get("crossSellConsent") === "on";
-  const futureIntentMonths = formData.get("futureIntentMonths")
-    ? Number(formData.get("futureIntentMonths"))
-    : null;
+  // "Not ready yet": either 1/3/6 months, or a chosen date ("after Christmas").
+  const futureIntentChoice = String(formData.get("futureIntentMonths") ?? "");
+  const futureIntentDate = String(formData.get("futureIntentDate") ?? "");
 
   if (!patientName || !phone || !treatmentType || !valuePounds || valuePounds <= 0) {
     return { error: "Please fill in patient name, phone, treatment type and a value." };
@@ -46,6 +46,19 @@ export async function addTreatment(formData: FormData): Promise<AddTreatmentResu
   if (!isTextableNumber(phone)) {
     return { error: "That doesn't look like a mobile number. Follow-ups are sent by text, so please enter the patient's mobile (07…)." };
   }
+  let futureIntentRemindAt: string | null = null;
+  if (futureIntentChoice === "date") {
+    const today = ukDate();
+    const latest = new Date(`${today}T00:00:00Z`);
+    latest.setUTCFullYear(latest.getUTCFullYear() + 1);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(futureIntentDate) || futureIntentDate <= today || futureIntentDate > latest.toISOString().slice(0, 10)) {
+      return { error: "Please choose a start date after today and within the next year." };
+    }
+    futureIntentRemindAt = futureIntentDate;
+  } else if (futureIntentChoice) {
+    futureIntentRemindAt = addMonths(new Date(), Number(futureIntentChoice)).toISOString().slice(0, 10);
+  }
+
   if (email && !EMAIL_RE.test(email)) {
     return { error: "That email address doesn't look right — please check it, or leave it blank." };
   }
@@ -146,10 +159,7 @@ export async function addTreatment(formData: FormData): Promise<AddTreatmentResu
     });
   }
 
-  const isFutureIntent = futureIntentMonths != null;
-  const futureIntentRemindAt = isFutureIntent
-    ? addMonths(new Date(), futureIntentMonths!).toISOString().slice(0, 10)
-    : null;
+  const isFutureIntent = futureIntentRemindAt != null;
 
   const { data: treatment, error: treatmentError } = await supabase
     .from("treatments")
@@ -268,4 +278,64 @@ export async function reopenTreatment(treatmentId: string) {
 
   revalidatePath("/dashboard");
   revalidatePath("/reports");
+}
+
+/**
+ * "We'll do it after Christmas": stops a quote's pending messages and
+ * restarts its follow-up on the chosen date — the first message goes that
+ * day, the rest follow the practice's schedule. The quote shows as paused
+ * until then. The original quote consent still applies (same quote).
+ */
+export async function pauseTreatment(treatmentId: string, untilDate: string): Promise<{ error?: string }> {
+  const { practice } = await requireCurrentPractice();
+  const today = ukDate();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(untilDate) || Number.isNaN(Date.parse(untilDate))) {
+    return { error: "Please choose a date." };
+  }
+  if (untilDate <= today) return { error: "Please choose a date after today." };
+  const latest = new Date(`${today}T00:00:00Z`);
+  latest.setUTCFullYear(latest.getUTCFullYear() + 1);
+  if (untilDate > latest.toISOString().slice(0, 10)) return { error: "Please choose a date within the next year." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("treatments")
+    .update({ status: "future_intent", future_intent_remind_at: untilDate })
+    .eq("id", treatmentId)
+    .eq("practice_id", practice.id)
+    .in("status", OPEN_STATUSES)
+    .select("id");
+  if (error || !data?.length) return { error: "Couldn't pause that quote. Please try again." };
+
+  await supabase
+    .from("sequence_steps")
+    .update({ status: "canceled", error: "Paused" })
+    .eq("treatment_id", treatmentId)
+    .eq("status", "pending");
+
+  revalidatePath("/dashboard");
+  return {};
+}
+
+/** Restarts a paused (or "not ready yet") quote today: the first message goes today. */
+export async function resumeTreatment(treatmentId: string): Promise<{ error?: string }> {
+  const { practice } = await requireCurrentPractice();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("treatments")
+    .update({ status: "in_sequence", future_intent_remind_at: null })
+    .eq("id", treatmentId)
+    .eq("practice_id", practice.id)
+    .eq("status", "future_intent")
+    .select("id");
+  if (error || !data?.length) return { error: "Couldn't restart that quote. Please try again." };
+
+  try {
+    await scheduleSequence(supabase, practice.id, treatmentId, { startNow: true });
+  } catch (e) {
+    console.error(e);
+    return { error: "The quote was restarted but its messages couldn't be scheduled. Please try again." };
+  }
+  revalidatePath("/dashboard");
+  return {};
 }

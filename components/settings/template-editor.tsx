@@ -5,13 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { saveTemplates, type TemplateEntry } from "@/lib/actions/settings";
 import type { Channel, SequenceStep } from "@/lib/types";
+import { describeDays } from "@/lib/schedule";
 
-const STEPS: { value: SequenceStep; label: string }[] = [
-  { value: "day_3", label: "Day 3" },
-  { value: "day_7", label: "Day 7" },
-  { value: "day_14", label: "Day 14" },
-  { value: "day_30", label: "Day 30" },
-];
 
 const CHANNELS: { value: Channel; label: string }[] = [
   { value: "sms", label: "SMS" },
@@ -23,11 +18,18 @@ const VARIABLES = ["{patientName}", "{treatmentType}", "{practiceName}", "{denti
 
 export function TemplateEditor({
   templates,
+  sequenceDays,
   readOnly = false,
 }: {
   templates: TemplateEntry[];
+  /** The practice's schedule: one box per message. */
+  sequenceDays: number[];
   readOnly?: boolean;
 }) {
+  const STEPS = sequenceDays.map((d, i) => ({
+    value: (i + 1) as SequenceStep,
+    label: `Message ${i + 1} — ${describeDays(d)} after the quote`,
+  }));
   const initial = new Map(
     templates.map((t) => [`${t.step}:${t.channel}`, t.body]),
   );

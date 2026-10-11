@@ -35,7 +35,7 @@ async function quote(practiceId: string, asUserId: string, dentistId: string | n
       [practiceId, patient.id, consent.id, asUserId, dentistId]
     );
     await tx.query(
-      "insert into sequence_steps (treatment_id, practice_id, step, channel, scheduled_for) values ($1, $2, 'day_3', 'sms', now())",
+      "insert into sequence_steps (treatment_id, practice_id, step, channel, scheduled_for) values ($1, $2, 1, 'sms', now())",
       [t.id, practiceId]
     );
     return t.id;

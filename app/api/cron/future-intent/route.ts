@@ -4,8 +4,9 @@ import { isAuthorizedCronRequest } from "@/lib/cron-auth";
 import { scheduleSequence } from "@/lib/sequence";
 
 /**
- * Converts "not ready now, remind me in N months" treatments into an
- * active sequence once their reminder date arrives. The original
+ * Starts follow-up for quotes that were paused or marked "not ready yet"
+ * once their date arrives: the first message goes that day, the rest follow
+ * the practice's schedule. The original
  * quote_followup consent captured at creation time still applies — it was
  * captured for this exact quote, not for "right now."
  */
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     await supabase.from("treatments").update({ status: "in_sequence" }).eq("id", treatment.id);
     try {
-      await scheduleSequence(supabase, treatment.practice_id, treatment.id);
+      await scheduleSequence(supabase, treatment.practice_id, treatment.id, { startNow: true });
     } catch (e) {
       console.error(e);
     }

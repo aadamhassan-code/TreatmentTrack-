@@ -19,7 +19,7 @@ const config: Record<DisplayStatus, { label: string; className: string }> = {
     className: "bg-clay-100 text-clay-700",
   },
   future_intent: {
-    label: "Reminder set",
+    label: "Paused",
     className: "bg-ink-900/6 text-ink-700",
   },
   opted_out: {

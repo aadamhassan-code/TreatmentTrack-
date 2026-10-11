@@ -7,7 +7,7 @@ const steps = [
   {
     number: "02",
     title: "The sequence runs itself",
-    body: "Day 3, 7, 14 and 30 messages go out on the channels you've enabled, with your practice's templates and an opt-out on every message.",
+    body: "Follow-ups go out on your schedule — 3 days, 1 week, 2 weeks and 1 month by default, or your own — on the channels you've enabled, in your practice's words, with an opt-out on every message. Patient says \"after Christmas\"? Pause it until then.",
   },
   {
     number: "03",
