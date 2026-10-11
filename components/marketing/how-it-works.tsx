@@ -23,7 +23,7 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="mx-auto max-w-6xl px-6 py-20">
+    <section id="how-it-works" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-20">
       <div className="max-w-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
           How it works

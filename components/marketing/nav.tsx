@@ -15,6 +15,12 @@ export function MarketingNav() {
           <Link href="/#compliance" className="hover:text-teal-900">
             Compliance
           </Link>
+          <Link href="/#security" className="hover:text-teal-900">
+            Security
+          </Link>
+          <Link href="/#questions" className="hover:text-teal-900">
+            Questions
+          </Link>
           <Link href="/pricing" className="hover:text-teal-900">
             Pricing
           </Link>

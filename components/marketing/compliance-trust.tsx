@@ -42,7 +42,7 @@ const comparisonRows = [
 
 export function ComplianceTrust() {
   return (
-    <section id="compliance" className="bg-teal-950 py-20 text-cream-50">
+    <section id="compliance" className="scroll-mt-20 bg-teal-950 py-20 text-cream-50">
       <div className="mx-auto max-w-6xl px-6">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gold-300">

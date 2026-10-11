@@ -92,9 +92,9 @@ export function RequestCallbackForm() {
                 id="practiceCount"
                 name="practiceCount"
                 type="number"
-                min={6}
+                min={1}
                 className="mt-1.5 w-full rounded-lg border border-ink-900/15 bg-cream-0 px-3.5 py-2.5 text-sm font-mono focus:border-teal-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
-                placeholder="8"
+                placeholder="1"
               />
             </div>
           </div>
