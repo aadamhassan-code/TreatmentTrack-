@@ -20,13 +20,17 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placehol
 const PUBLIC_PREFIXES = [
   "/pricing",
   "/request-callback",
+  "/privacy",
+  "/terms",
+  "/dpa",
   "/login",
   "/signup",
   "/approve", // patient-facing approval links, authenticated by token
   "/api",
+  "/offline.html",
 ];
 
-function isPublicPath(pathname: string): boolean {
+export function isPublicPath(pathname: string): boolean {
   if (pathname === "/") return true;
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
