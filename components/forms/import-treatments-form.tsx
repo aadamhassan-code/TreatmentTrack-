@@ -214,41 +214,37 @@ function PmsExportHelp() {
   return (
     <div className="space-y-2">
       <details className="rounded-lg border border-ink-900/10 bg-cream-50 px-4 py-3">
-        <summary className="cursor-pointer text-sm font-medium text-ink-900">How to get this list from Dentally</summary>
+        <summary className="cursor-pointer text-sm font-medium text-ink-900">How to find these quotes in Dentally</summary>
         <ol className={`${step} mt-3`}>
           <li>
-            In Dentally, click <strong>Reports</strong> in the top menu, scroll down to the <strong>Treatment</strong>{" "}
-            section and click <strong>Treatment Plans</strong>.
+            In Dentally, open <strong>Reports</strong> and choose <strong>Treatment Plans</strong>.
           </li>
           <li>
-            Use the filters on the left:
+            Set the filters on the left:
             <ul className="mt-1 list-disc space-y-0.5 pl-5">
               <li>
-                <strong>Date range</strong>: the last few months (quotes older than {MAX_QUOTE_AGE_MONTHS} months
-                aren&rsquo;t imported).
+                <strong>Started on or after</strong>: a date in the last few months (quotes older than{" "}
+                {MAX_QUOTE_AGE_MONTHS} months can&rsquo;t be followed up).
               </li>
               <li>
-                <strong>Payment Plan / Fee Schedule</strong>: <strong>Private</strong>.
+                <strong>Payment Plan</strong>: your <strong>Private</strong> plan.
               </li>
               <li>
-                <strong>Items Ticked</strong>: plans with <strong>no items ticked</strong> — treatment that was quoted
-                but never started.
+                <strong>Items Ticked</strong>: <strong>None ticked</strong> — quoted, but no treatment started.
               </li>
               <li>
-                <strong>Complete</strong>: <strong>Not Complete</strong>.
+                <strong>Complete</strong>: <strong>Not complete</strong>.
+              </li>
+              <li>
+                <strong>Practitioner</strong>: one dentist, or leave it as everyone.
               </li>
             </ul>
           </li>
           <li>
-            Click <strong>Export</strong> in the top right. A <strong>.csv</strong> file downloads.
-          </li>
-          <li>
-            Open it in Excel. Delete anyone who has since booked, and anyone who wasn&rsquo;t offered the chance to
-            opt out of follow-up. Check there are columns for the patient&rsquo;s name, <strong>mobile number</strong>,
-            treatment and value — rename headings to match the template if needed.
-          </li>
-          <li>
-            <em>File → Save As → CSV</em>, then choose the file below.
+            That&rsquo;s your list of patients quoted for private treatment who haven&rsquo;t started. This report
+            can&rsquo;t be downloaded and doesn&rsquo;t show mobile numbers, so add each patient who was offered an
+            opt-out with <strong>Add treatment</strong> (click their name in Dentally to see their mobile), or type
+            them into the template above and import it.
           </li>
         </ol>
         <p className="mt-3 text-xs text-ink-500">
