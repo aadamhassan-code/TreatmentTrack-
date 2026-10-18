@@ -78,7 +78,7 @@ export function PricingTable() {
         >
           <span
             className={cn(
-              "absolute top-0.5 h-5 w-5 rounded-full bg-cream-0 shadow transition-transform",
+              "absolute left-0 top-0.5 h-5 w-5 rounded-full bg-cream-0 shadow transition-transform",
               annual ? "translate-x-[22px]" : "translate-x-0.5"
             )}
           />
