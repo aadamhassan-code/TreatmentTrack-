@@ -308,6 +308,27 @@ function PmsExportHelp() {
           </li>
         </ol>
       </details>
+      <details className="rounded-lg border border-ink-900/10 bg-cream-50 px-4 py-3">
+        <summary className="cursor-pointer text-sm font-medium text-ink-900">
+          Using other software? (Sensei Cloud, Aerona, iSmile, Pearl…)
+        </summary>
+        <div className="mt-3 space-y-2 text-sm text-ink-700">
+          <p>
+            Any export works as long as it has a column for the patient&rsquo;s name, their mobile number, the
+            treatment, and the price — most &ldquo;outstanding treatment&rdquo; or &ldquo;unscheduled treatment
+            plan&rdquo; reports do. Export it as CSV (or open in Excel and <em>Save As → CSV</em>) and choose the
+            file below; common column headings are recognised automatically.
+          </p>
+          <p>
+            If your software&rsquo;s report isn&rsquo;t recognised, copy the columns into the template above — or
+            tell us which software you use via the{" "}
+            <Link href="/request-callback" className="font-medium text-teal-700 underline">
+              contact form
+            </Link>{" "}
+            (send a heading row only, never patient data) and we&rsquo;ll add it.
+          </p>
+        </div>
+      </details>
     </div>
   );
 }

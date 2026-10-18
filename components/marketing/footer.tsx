@@ -15,7 +15,7 @@ export function MarketingFooter() {
               consent-gated follow-up — not generic recall reminders.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-8 text-sm">
+          <div className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3">
             <div>
               <p className="font-semibold text-ink-900">Product</p>
               <ul className="mt-3 space-y-2 text-ink-500">
@@ -47,6 +47,31 @@ export function MarketingFooter() {
                 <li>
                   <Link href="/signup" className="hover:text-teal-900">
                     Sign up
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/request-callback" className="hover:text-teal-900">
+                    Support
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-ink-900">Legal</p>
+              <ul className="mt-3 space-y-2 text-ink-500">
+                <li>
+                  <Link href="/privacy" className="hover:text-teal-900">
+                    Privacy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="hover:text-teal-900">
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/dpa" className="hover:text-teal-900">
+                    Data Processing Agreement
                   </Link>
                 </li>
               </ul>

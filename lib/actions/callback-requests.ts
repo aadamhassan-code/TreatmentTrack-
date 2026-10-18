@@ -22,8 +22,17 @@ export async function requestCallback(formData: FormData): Promise<RequestCallba
   const practiceCountRaw = String(formData.get("practiceCount") ?? "").trim();
   const message = String(formData.get("message") ?? "").trim();
 
+  // Honeypot: a field real visitors never see or fill. Bots that stuff
+  // every input give themselves away; we pretend it worked so they move on.
+  if (String(formData.get("website") ?? "").trim() !== "") {
+    return { success: true };
+  }
+
   if (!name || !email) {
     return { error: "Please fill in your name and email." };
+  }
+  if (name.length > 200 || email.length > 320 || phone.length > 50 || message.length > 2000) {
+    return { error: "One of the fields is too long. Please shorten it and try again." };
   }
 
   const practiceCount = practiceCountRaw ? Number(practiceCountRaw) : null;

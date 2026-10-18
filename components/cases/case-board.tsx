@@ -97,7 +97,7 @@ export function CaseBoardView({
                 }}
                 className={cn(
                   "flex w-64 shrink-0 flex-col rounded-xl border bg-teal-50 p-2.5 transition-colors",
-                  dragOver === col.id ? "border-[#2383E2] bg-sky/30" : "border-transparent"
+                  dragOver === col.id ? "border-teal-600 bg-sky/30" : "border-transparent"
                 )}
               >
                 <header className="mb-3 flex items-baseline justify-between gap-2 px-1">

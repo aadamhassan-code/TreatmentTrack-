@@ -19,9 +19,10 @@ Tailwind CSS · deployed to Vercel.
    values — everything else (Stripe, Twilio, WhatsApp, email) can be left
    blank and the app will show "not connected yet" states rather than
    crashing.
-3. Create a Supabase project and run the migration in
-   `supabase/migrations/0001_init.sql` against it (via the Supabase SQL
-   editor, or `supabase db push` if you're using the CLI).
+3. Create a Supabase project and run **every** migration in
+   `supabase/migrations/` against it **in filename order** (0001 → 0007),
+   via the Supabase SQL editor, or `supabase db push` if you're using the
+   CLI.
 4. `npm run dev` and visit `http://localhost:3000`.
 
 ## Testing without Stripe
@@ -138,8 +139,15 @@ transaction (`record_patient_opt_out`).
   written against Dentally's v1 API and tested against a mock; once approved,
   the client in `lib/integrations/dentally.ts` needs moving to NexGen's
   endpoints and OAuth2 before going live.
-- **Software of Excellence (Exact/R4)** has no open API — practices export
-  outstanding treatment plans to CSV and use Import CSV.
+- **Software of Excellence (Exact) and Carestream (R4)** have no open
+  API — practices export outstanding treatment plans to CSV and use
+  Import CSV.
+- **CareStack**'s Treatment Tracker report imports as downloaded (its
+  column names are recognised); a live API connection would go through
+  CareStack's partner programme.
+- Other systems (Sensei Cloud, Aerona, iSmile, Pearl…) also have no open
+  self-service APIs — Import CSV recognises their common column headings,
+  and the import page tells practices what to export.
 
 ## Data location
 
@@ -147,3 +155,38 @@ The Supabase project is in London, and `vercel.json` pins the app's server
 code to Vercel's London region (`lhr1`), so patient data is stored and
 processed in the UK. Twilio (SMS) and Resend (email) are sub-processors that
 handle the message content they send.
+
+## Back office
+
+`/admin` is a read-only overview for the TreatmentTrack team (not practice
+staff): every practice with plan/status and per-practice value, platform
+totals, failed messages, sync problems, and callback leads. Access is
+controlled by `PLATFORM_ADMIN_EMAILS` (comma-separated sign-in emails);
+unset means closed to everyone.
+
+## PWA
+
+The app is installable (manifest + icons + a conservative service worker:
+network-first pages with an offline fallback, cached hashed assets only —
+patient data is never cached). The service worker registers in production
+builds only.
+
+## CI
+
+`.github/workflows/ci.yml` runs lint, the full test suite and a
+production build on every PR and push to main. Turn on branch protection
+for `main` requiring the `checks` job, so nothing broken can merge.
+
+## Legal pages
+
+`/privacy`, `/terms` and `/dpa` describe the controller/processor model,
+consent/opt-out handling, UK data residency and sub-processors, matching
+how the code behaves. Before onboarding a real practice: add the company's
+registered name/number and ICO registration to these pages and have them
+reviewed — they are a faithful starting point, not legal advice.
+
+## Go-live
+
+See `docs/GO-LIVE.md` for the exact environment variables and steps to
+take a practice live (including connecting Dentally with a
+practice-generated API token).
