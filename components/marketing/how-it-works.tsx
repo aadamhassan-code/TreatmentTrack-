@@ -16,8 +16,8 @@ const steps = [
   },
   {
     number: "04",
-    title: "See what you recovered",
-    body: "Your dashboard totals pipeline value and revenue recovered this month, so you can point to a real number, not a feeling.",
+    title: "Track it through to completion",
+    body: "Once booked, the patient moves along a board like Trello — for an implant: consultation, consent signed, placed, healing, scan, crown fitted, completed. Anyone stuck at a stage is flagged, and your reports show revenue recovered and completed.",
   },
 ];
 

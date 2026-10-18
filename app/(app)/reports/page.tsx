@@ -13,6 +13,7 @@ import {
   type ReportTreatment,
   type Tally,
 } from "@/lib/reports";
+import { buildCaseReport, type CaseRow, type CaseStage } from "@/lib/cases";
 
 function percent(rate: number | null): string {
   return rate == null ? "—" : `${Math.round(rate * 100)}%`;
@@ -33,7 +34,7 @@ export default async function ReportsPage({
   const period = parsePeriod((await searchParams).period);
   const from = periodStart(period);
 
-  const [treatments, sentRes, failedRes, optOutRes] = await Promise.all([
+  const [treatments, sentRes, failedRes, optOutRes, caseRows, { data: caseBoards }, { data: caseStages }] = await Promise.all([
     // Everything, not just quotes made in the period: a quote from last
     // month booked this month still counts as recovered this month.
     fetchAll<ReportTreatment>((lo, hi) =>
@@ -55,6 +56,17 @@ export default async function ReportsPage({
       if (from) q = q.gte("opted_out_at", from);
       return q;
     })(),
+    fetchAll<Pick<CaseRow, "board_id" | "stage_id" | "status" | "stage_entered_at" | "completed_at" | "created_at" | "value_pence">>((lo, hi) =>
+      supabase
+        .from("cases")
+        .select("board_id, stage_id, status, stage_entered_at, completed_at, created_at, value_pence")
+        .eq("practice_id", practice.id)
+        .in("status", ["active", "completed"])
+        .order("id")
+        .range(lo, hi)
+    ),
+    supabase.from("case_boards").select("id, name").eq("practice_id", practice.id).order("position"),
+    supabase.from("case_stages").select("id, expected_days").eq("practice_id", practice.id),
   ]);
 
   function countSteps(status: string, dateColumn: string) {
@@ -73,6 +85,11 @@ export default async function ReportsPage({
   );
   const showByDentist = !isDentist && report.byDentist.some((d) => d.dentistUserId);
   const periodLabel = REPORT_PERIODS.find((p) => p.value === period)!.phrase;
+  const boardOrder = (caseBoards ?? []).map((b) => b.id as string);
+  const caseReport = buildCaseReport(caseRows, (caseStages ?? []) as CaseStage[], from).sort(
+    (a, b) => (a.boardId ? boardOrder.indexOf(a.boardId) : 999) - (b.boardId ? boardOrder.indexOf(b.boardId) : 999)
+  );
+  const boardNames = Object.fromEntries((caseBoards ?? []).map((b) => [b.id, b.name as string]));
 
   const outcomes: { label: string; tally: Tally; className: string }[] = [
     { label: "Booked", tally: report.booked, className: "bg-gold-500" },
@@ -227,6 +244,43 @@ export default async function ReportsPage({
           </div>
           <p className="mt-2 text-xs text-ink-500">
             Quotes and booking rate are for quotes made {periodLabel}; recovered is everything booked {periodLabel}.
+          </p>
+        </div>
+      )}
+
+      {caseReport.length > 0 && (
+        <div>
+          <h2 className="mb-3 font-display text-xl font-medium text-ink-900">Treatment progress</h2>
+          <div className="overflow-x-auto rounded-xl border border-ink-900/8 bg-cream-0">
+            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-ink-900/8 text-xs uppercase tracking-wide text-ink-500">
+                  <th className="px-5 py-3 font-medium">Board</th>
+                  <th className="px-5 py-3 text-right font-medium">In treatment now</th>
+                  <th className="px-5 py-3 text-right font-medium">Overdue now</th>
+                  <th className="px-5 py-3 text-right font-medium">Completed</th>
+                  <th className="px-5 py-3 text-right font-medium">Completed value</th>
+                  <th className="px-5 py-3 text-right font-medium">Average time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {caseReport.map((row) => (
+                  <tr key={row.boardId ?? "none"} className="border-b border-ink-900/6 last:border-0">
+                    <td className="px-5 py-3 text-ink-900">{row.boardId ? (boardNames[row.boardId] ?? "Deleted board") : "Deleted board"}</td>
+                    <td className="px-5 py-3 text-right font-mono tabular-nums">{row.active}</td>
+                    <td className={cn("px-5 py-3 text-right font-mono tabular-nums", row.stuck > 0 && "text-clay-700")}>{row.stuck}</td>
+                    <td className="px-5 py-3 text-right font-mono tabular-nums">{row.completed}</td>
+                    <td className="px-5 py-3 text-right font-mono tabular-nums">{formatGBP(row.completedValuePence)}</td>
+                    <td className="px-5 py-3 text-right font-mono tabular-nums">
+                      {row.averageDays == null ? "—" : `${row.averageDays} day${row.averageDays === 1 ? "" : "s"}`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-xs text-ink-500">
+            Completed and average time (from going on the board to completed) are for cases completed {periodLabel}.
           </p>
         </div>
       )}

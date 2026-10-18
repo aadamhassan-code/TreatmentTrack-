@@ -9,6 +9,8 @@ import { DentistFilter } from "@/components/dashboard/dentist-filter";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAll } from "@/lib/supabase/fetch-all";
 import { OPEN_STATUSES, type Treatment } from "@/lib/types";
+import { isStuck, type CaseRow, type CaseStage } from "@/lib/cases";
+import Link from "next/link";
 
 export default async function DashboardPage({
   searchParams,
@@ -35,7 +37,7 @@ export default async function DashboardPage({
   const queryFrom = new Date(`${monthStart}T00:00:00Z`);
   queryFrom.setUTCDate(queryFrom.getUTCDate() - 1);
 
-  const [open, bookedRecently, { data: recentlyClosed }] = await Promise.all([
+  const [open, bookedRecently, { data: recentlyClosed }, activeCases, { data: caseStages }] = await Promise.all([
     // Open quotes, biggest first — the ones most worth a phone call today.
     fetchAll<Treatment>((from, to) =>
       scoped(supabase
@@ -65,7 +67,17 @@ export default async function DashboardPage({
       .in("status", ["converted", "declined", "lost"])
       .order("updated_at", { ascending: false })
       .limit(10),
+    fetchAll<Pick<CaseRow, "status" | "stage_id" | "stage_entered_at">>((from, to) =>
+      scoped(supabase.from("cases").select("status, stage_id, stage_entered_at").eq("practice_id", practice.id))
+        .eq("status", "active")
+        .order("id")
+        .range(from, to)
+    ),
+    supabase.from("case_stages").select("id, expected_days").eq("practice_id", practice.id),
   ]);
+
+  const stageById = new Map(((caseStages ?? []) as Pick<CaseStage, "id" | "expected_days">[]).map((s) => [s.id, s]));
+  const overdueCases = activeCases.filter((c) => isStuck(c, c.stage_id ? stageById.get(c.stage_id) : undefined)).length;
 
   const bookedThisMonth = bookedRecently.filter((t) => ukDate(t.converted_at) >= monthStart);
   // Opted-out patients won't get any more messages, so their quotes stay
@@ -103,6 +115,18 @@ export default async function DashboardPage({
           </LinkButton>
         </div>
       </div>
+
+      {overdueCases > 0 && (
+        <Link
+          href={!isDentist && typeof rawFilter === "string" ? `/cases?dentist=${encodeURIComponent(rawFilter)}` : "/cases"}
+          className="block rounded-lg border border-clay-500/40 bg-clay-100 px-4 py-3 text-sm text-clay-700 hover:border-clay-500"
+        >
+          <strong>
+            {overdueCases} patient{overdueCases === 1 ? " is" : "s are"} overdue
+          </strong>{" "}
+          at a treatment stage — check they&rsquo;re booked in. Open the Cases board →
+        </Link>
+      )}
 
       <div data-tour="pipeline" className="grid gap-5 sm:grid-cols-2">
         <LedgerStat

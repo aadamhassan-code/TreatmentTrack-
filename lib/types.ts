@@ -89,5 +89,7 @@ export interface Settings {
   email_enabled: boolean;
   /** Days after the quote for each follow-up message, e.g. [3, 7, 14, 30]. */
   sequence_days: number[];
+  /** Booked quotes go on the Cases board automatically. */
+  cases_auto_start: boolean;
   updated_at: string;
 }

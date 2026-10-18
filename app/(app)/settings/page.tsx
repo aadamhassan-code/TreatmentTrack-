@@ -3,6 +3,8 @@ import { IntegrationRow } from "@/components/settings/integration-status";
 import { ChannelSettingsForm } from "@/components/settings/channel-settings-form";
 import { TemplateEditor } from "@/components/settings/template-editor";
 import { ScheduleEditor } from "@/components/settings/schedule-editor";
+import { CaseBoardsEditor } from "@/components/settings/case-boards-editor";
+import type { CaseBoard, CaseStage } from "@/lib/cases";
 import { DEFAULT_SEQUENCE_DAYS } from "@/lib/schedule";
 import { DentallyConnection, type DentallyIntegrationInfo } from "@/components/settings/dentally-connection";
 import { isDentallyIntegrationEnabled } from "@/lib/integrations/dentally";
@@ -19,7 +21,7 @@ export default async function SettingsPage() {
   const readOnly = role !== "owner";
   const supabase = await createClient();
 
-  const [{ data: settings }, { data: templates }, { data: dentally }] = await Promise.all([
+  const [{ data: settings }, { data: templates }, { data: dentally }, { data: boardRows }, { data: stageRows }] = await Promise.all([
     supabase.from("settings").select("*").eq("practice_id", practice.id).single(),
     supabase
       .from("message_templates")
@@ -31,7 +33,14 @@ export default async function SettingsPage() {
       .eq("practice_id", practice.id)
       .eq("provider", "dentally")
       .maybeSingle(),
+    supabase.from("case_boards").select("id, name, keywords, is_default, position").eq("practice_id", practice.id).order("position"),
+    supabase.from("case_stages").select("id, board_id, name, expected_days, position").eq("practice_id", practice.id).order("position"),
   ]);
+
+  const caseBoards: CaseBoard[] = (boardRows ?? []).map((b) => ({
+    ...(b as Omit<CaseBoard, "stages">),
+    stages: ((stageRows ?? []) as CaseStage[]).filter((s) => s.board_id === b.id),
+  }));
 
   const sequenceDays: number[] = (settings as Settings | null)?.sequence_days ?? DEFAULT_SEQUENCE_DAYS;
 
@@ -163,6 +172,22 @@ export default async function SettingsPage() {
           Message templates
         </h2>
         <TemplateEditor templates={templateEntries} sequenceDays={sequenceDays} readOnly={readOnly} />
+      </section>
+
+      <section>
+        <h2 className="mb-1 font-display text-xl font-medium text-ink-900">Cases board</h2>
+        <p className="mb-3 text-sm text-ink-500">
+          The stages each kind of treatment goes through once the patient has booked.
+        </p>
+        <Card>
+          <CardBody>
+            <CaseBoardsEditor
+              boards={caseBoards}
+              autoStart={(settings as Settings | null)?.cases_auto_start ?? true}
+              readOnly={readOnly}
+            />
+          </CardBody>
+        </Card>
       </section>
     </div>
   );

@@ -76,6 +76,14 @@ export function tourSteps(ctx: TourContext): TourStep[] {
   });
 
   steps.push({
+    target: "nav-/cases",
+    title: "Track the treatment",
+    body: dentist
+      ? "Once a patient books, they appear on My cases — e.g. implant: consultation → consent signed → placed → healing → scan → crown fitted → completed. Drag the card along (or use its arrows) as each stage is done; anyone overdue is flagged."
+      : "Once a patient books, they appear on the Cases board — e.g. implant: consultation → consent signed → placed → healing → scan → crown fitted → completed. Drag the card along (or use its arrows) as each stage is done; anyone overdue is flagged.",
+  });
+
+  steps.push({
     target: "pipeline",
     title: "See what's at stake",
     body: "Pipeline value is everything still being followed up. Recovered this month is what's been booked.",
@@ -107,7 +115,7 @@ export function tourSteps(ctx: TourContext): TourStep[] {
     steps.push({
       target: "nav-/settings",
       title: "Messages and channels",
-      body: "In Settings choose when messages go (e.g. 3 days, 1 week, 1 month), text and/or email, and the wording of each message. An opt-out is always added for you.",
+      body: "In Settings choose when messages go (e.g. 3 days, 1 week, 1 month), text and/or email, and the wording of each message. An opt-out is always added for you. You can also change the stages on each Cases board.",
     });
     steps.push({
       target: "nav-/team",

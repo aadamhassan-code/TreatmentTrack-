@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Menu,
   X,
+  SquareKanban,
 } from "lucide-react";
 import { switchPractice } from "@/lib/actions/team";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ type NavLink = {
 
 const links: NavLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/cases", label: "Cases", icon: SquareKanban },
   { href: "/treatments/new", label: "Add treatment", icon: FilePlus2 },
   { href: "/treatments/import", label: "Import CSV", icon: Upload },
   {
@@ -101,7 +103,7 @@ export function Sidebar({
               (!l.dentally || dentallyPending !== null),
           )
           .map(({ href, label: baseLabel, icon: Icon, dentally }) => {
-            const label = role === "dentist" && href === "/dashboard" ? "My quotes" : role === "dentist" && href === "/reports" ? "My reports" : baseLabel;
+            const label = role === "dentist" && href === "/dashboard" ? "My quotes" : role === "dentist" && href === "/reports" ? "My reports" : role === "dentist" && href === "/cases" ? "My cases" : baseLabel;
             const active = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
