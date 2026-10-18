@@ -20,6 +20,14 @@ export function isPlatformAdminEmail(email: string | null | undefined, allowlist
   return !!email && allowlist.has(email.trim().toLowerCase());
 }
 
+/** The reporting windows the back office uses: ISO timestamps for 7 and 30 days ago. */
+export function reportWindows(now = new Date()): { d7: string; d30: string } {
+  return {
+    d7: new Date(now.getTime() - 7 * 86_400_000).toISOString(),
+    d30: new Date(now.getTime() - 30 * 86_400_000).toISOString(),
+  };
+}
+
 /**
  * Gate for /admin. Must be signed in AND on the allowlist; anyone else is
  * sent to the ordinary dashboard without learning the back office exists.

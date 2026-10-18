@@ -1,4 +1,4 @@
-import { requirePlatformAdmin } from "@/lib/admin";
+import { reportWindows, requirePlatformAdmin } from "@/lib/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fetchAll } from "@/lib/supabase/fetch-all";
 import { Card } from "@/components/ui/card";
@@ -77,9 +77,7 @@ export default async function AdminOverviewPage() {
   await requirePlatformAdmin();
   const admin = createAdminClient();
 
-  const now = Date.now();
-  const d7 = new Date(now - 7 * 86_400_000).toISOString();
-  const d30 = new Date(now - 30 * 86_400_000).toISOString();
+  const { d7, d30 } = reportWindows();
 
   const [practices, treatments, steps, integrations, leads, pendingCandidates, optOuts30d] =
     await Promise.all([

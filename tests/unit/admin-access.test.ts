@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isPlatformAdminEmail, parseAdminEmails } from "@/lib/admin";
+import { isPlatformAdminEmail, parseAdminEmails, reportWindows } from "@/lib/admin";
 
 describe("platform admin allowlist", () => {
   it("parses a comma-separated list, ignoring case, spaces and junk", () => {
@@ -20,5 +20,13 @@ describe("platform admin allowlist", () => {
     expect(isPlatformAdminEmail("other@practice.co.uk", list)).toBe(false);
     expect(isPlatformAdminEmail(null, list)).toBe(false);
     expect(isPlatformAdminEmail(undefined, list)).toBe(false);
+  });
+});
+
+describe("reportWindows", () => {
+  it("returns ISO timestamps exactly 7 and 30 days back", () => {
+    const { d7, d30 } = reportWindows(new Date("2026-10-19T00:00:00.000Z"));
+    expect(d7).toBe("2026-10-12T00:00:00.000Z");
+    expect(d30).toBe("2026-09-19T00:00:00.000Z");
   });
 });
