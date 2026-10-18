@@ -150,7 +150,7 @@ export function GuidedTour({ steps, autoStart }: { steps: TourStep[]; autoStart:
       {/* Dim everything except the highlighted element; clicks outside the card are ignored. */}
       {highlight ? (
         <div
-          className="pointer-events-none fixed rounded-xl ring-2 ring-[#2383E2] transition-all duration-200"
+          className="pointer-events-none fixed rounded-xl ring-2 ring-teal-600 transition-all duration-200"
           style={{ ...highlight, boxShadow: "0 0 0 9999px rgba(15, 23, 42, 0.55)" }}
         />
       ) : (

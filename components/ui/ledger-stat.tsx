@@ -25,13 +25,13 @@ export function LedgerStat({
           {label}
         </p>
         {accent && (
-          <span className="h-1.5 w-1.5 rounded-full bg-[#4dab6f]" aria-hidden />
+          <span className="h-1.5 w-1.5 rounded-full bg-teal-500" aria-hidden />
         )}
       </div>
       <p
         className={cn(
           "mt-2 text-4xl font-semibold tracking-tight tabular-nums",
-          accent ? "text-[#2b7a4b]" : "text-ink-900"
+          accent ? "text-teal-600" : "text-ink-900"
         )}
       >
         {value}
