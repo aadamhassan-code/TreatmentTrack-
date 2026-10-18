@@ -23,6 +23,7 @@ const PUBLIC_PREFIXES = [
   "/privacy",
   "/terms",
   "/dpa",
+  "/security",
   "/login",
   "/signup",
   "/approve", // patient-facing approval links, authenticated by token

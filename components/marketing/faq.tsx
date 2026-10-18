@@ -39,8 +39,7 @@ export function Faq() {
   return (
     <section id="questions" className="scroll-mt-20 bg-cream-0 py-20">
       <div className="mx-auto max-w-4xl px-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">Questions owners ask</p>
-        <h2 className="mt-3 font-display text-3xl font-medium text-ink-900 md:text-4xl">Answered plainly.</h2>
+        <h2 className="text-center font-display text-3xl text-ink-900 md:text-[40px]">Common questions</h2>
         <div className="mt-10 divide-y divide-ink-900/8 rounded-xl border border-ink-900/8 bg-cream-50">
           {questions.map(({ q, a }) => (
             <details key={q} className="group px-6 py-5">
@@ -57,9 +56,9 @@ export function Faq() {
         <p className="mt-8 text-center text-ink-500">
           Something else?{" "}
           <Link href="/request-callback?topic=walkthrough" className="font-medium text-teal-700 underline">
-            Talk to us first
+            Book a walkthrough
           </Link>{" "}
-          — we&rsquo;ll walk you through it, no obligation.
+          and we&rsquo;ll show you round, with no obligation.
         </p>
       </div>
     </section>

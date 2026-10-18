@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "gilt" | "onDark";
 type Size = "sm" | "md" | "lg";
 
 const variantClasses: Record<Variant, string> = {
@@ -9,6 +9,9 @@ const variantClasses: Record<Variant, string> = {
   secondary: "bg-teal-50 text-ink-900 hover:bg-teal-100",
   ghost: "bg-transparent text-ink-900 hover:bg-teal-50",
   danger: "bg-clay-600 text-white hover:bg-clay-700",
+  // For use on the dark green marketing bands.
+  gilt: "bg-gold-300 text-ink-900 hover:bg-gold-200",
+  onDark: "bg-transparent text-cream-50 ring-1 ring-inset ring-cream-50/30 hover:bg-cream-50/10",
 };
 
 const sizeClasses: Record<Size, string> = {
@@ -18,7 +21,7 @@ const sizeClasses: Record<Size, string> = {
 };
 
 const base =
-  "inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none";
+  "inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-500";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;

@@ -83,6 +83,41 @@ body {
   background: var(--color-cream-0);
 }
 
+/* The homepage's one orchestrated moment: the follow-up track draws
+   itself, and each stop arrives in turn. */
+@keyframes track-draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes track-draw-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes stop-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.track-line-x {
+  transform-origin: left center;
+  animation: track-draw 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.2s both;
+}
+.track-line-y {
+  transform-origin: center top;
+  animation: track-draw-y 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.2s both;
+}
+.track-stop {
+  animation: stop-in 0.5s ease-out both;
+  animation-delay: calc(var(--i, 0) * 0.36s + 0.25s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track-line-x,
+  .track-line-y,
+  .track-stop {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
