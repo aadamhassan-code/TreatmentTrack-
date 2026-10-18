@@ -108,6 +108,7 @@ export function ImportTreatmentsForm() {
             <Download className="h-4 w-4" />
             Download a template
           </a>
+          <PmsExportHelp />
           <div>
             <input
               id="csv"
@@ -202,6 +203,73 @@ export function ImportTreatmentsForm() {
           </CardBody>
         </Card>
       )}
+    </div>
+  );
+}
+
+const step = "list-decimal space-y-1.5 pl-5 text-sm text-ink-700";
+
+/** Step-by-step: getting quotes out of the practice software as a CSV. */
+function PmsExportHelp() {
+  return (
+    <div className="space-y-2">
+      <details className="rounded-lg border border-ink-900/10 bg-cream-50 px-4 py-3">
+        <summary className="cursor-pointer text-sm font-medium text-ink-900">How to get this list from Dentally</summary>
+        <ol className={`${step} mt-3`}>
+          <li>
+            In Dentally, click <strong>Reports</strong> in the top menu, scroll down to the <strong>Treatment</strong>{" "}
+            section and click <strong>Treatment Plans</strong>.
+          </li>
+          <li>
+            Use the filters on the left:
+            <ul className="mt-1 list-disc space-y-0.5 pl-5">
+              <li>
+                <strong>Date range</strong>: the last few months (quotes older than {MAX_QUOTE_AGE_MONTHS} months
+                aren&rsquo;t imported).
+              </li>
+              <li>
+                <strong>Payment Plan / Fee Schedule</strong>: <strong>Private</strong>.
+              </li>
+              <li>
+                <strong>Items Ticked</strong>: plans with <strong>no items ticked</strong> — treatment that was quoted
+                but never started.
+              </li>
+              <li>
+                <strong>Complete</strong>: <strong>Not Complete</strong>.
+              </li>
+            </ul>
+          </li>
+          <li>
+            Click <strong>Export</strong> in the top right. A <strong>.csv</strong> file downloads.
+          </li>
+          <li>
+            Open it in Excel. Delete anyone who has since booked, and anyone who wasn&rsquo;t offered the chance to
+            opt out of follow-up. Check there are columns for the patient&rsquo;s name, <strong>mobile number</strong>,
+            treatment and value — rename headings to match the template if needed.
+          </li>
+          <li>
+            <em>File → Save As → CSV</em>, then choose the file below.
+          </li>
+        </ol>
+        <p className="mt-3 text-xs text-ink-500">
+          Patients already partway through treatment with appointments still to book are in Dentally&rsquo;s{" "}
+          <strong>Unbooked Treatment</strong> report instead — those have said yes, so add them to the Cases board
+          rather than following them up here.
+        </p>
+      </details>
+      <details className="rounded-lg border border-ink-900/10 bg-cream-50 px-4 py-3">
+        <summary className="cursor-pointer text-sm font-medium text-ink-900">
+          How to get this list from Software of Excellence (Exact / R4)
+        </summary>
+        <ol className={`${step} mt-3`}>
+          <li>Run your outstanding (uncompleted) treatment plans report for private plans.</li>
+          <li>Export it to Excel.</li>
+          <li>
+            Delete anyone who has since booked or wasn&rsquo;t offered an opt-out, check the name, mobile, treatment
+            and value columns, then <em>File → Save As → CSV</em> and choose the file below.
+          </li>
+        </ol>
+      </details>
     </div>
   );
 }
