@@ -248,9 +248,9 @@ function PmsExportHelp() {
           </li>
         </ol>
         <p className="mt-3 text-xs text-ink-500">
-          Patients already partway through treatment with appointments still to book are in Dentally&rsquo;s{" "}
-          <strong>Unbooked Treatment</strong> report instead — those have said yes, so add them to the Cases board
-          rather than following them up here.
+          Patients already part-way through treatment with appointments still to book show up when you set{" "}
+          <strong>Appointment status</strong> to <strong>Has unbooked treatment</strong> (Dentally&rsquo;s Unbooked
+          Treatment report). They&rsquo;ve said yes, so add them to the Cases board rather than following them up here.
         </p>
       </details>
       <details className="rounded-lg border border-ink-900/10 bg-cream-50 px-4 py-3">
