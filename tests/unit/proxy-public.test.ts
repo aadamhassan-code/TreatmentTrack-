@@ -10,6 +10,7 @@ describe("isPublicPath", () => {
       "/privacy",
       "/terms",
       "/dpa",
+      "/security",
       "/login",
       "/signup",
       "/signup/success",

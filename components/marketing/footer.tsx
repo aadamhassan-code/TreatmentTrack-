@@ -30,8 +30,8 @@ export function MarketingFooter() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#compliance" className="hover:text-teal-900">
-                    Compliance
+                  <Link href="/security" className="hover:text-teal-900">
+                    Data &amp; security
                   </Link>
                 </li>
               </ul>
