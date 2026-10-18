@@ -1,23 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { Young_Serif, Inter, IBM_Plex_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { RegisterServiceWorker } from "@/components/pwa/register-sw";
 import "./globals.css";
 
-const youngSerif = Young_Serif({
-  variable: "--font-young-serif",
+// Self-hosted (app/fonts, SIL OFL licences alongside): builds never fetch
+// from Google Fonts, so they work offline, in CI, and behind proxies.
+const youngSerif = localFont({
+  src: "./fonts/young-serif-latin-400-normal.woff2",
   weight: "400",
-  subsets: ["latin"],
+  variable: "--font-young-serif",
 });
 
-const inter = Inter({
+const inter = localFont({
+  src: "./fonts/inter-latin-wght-normal.woff2",
+  weight: "100 900",
   variable: "--font-inter",
-  subsets: ["latin"],
 });
 
-const plexMono = IBM_Plex_Mono({
+const plexMono = localFont({
+  src: [
+    { path: "./fonts/ibm-plex-mono-latin-400-normal.woff2", weight: "400" },
+    { path: "./fonts/ibm-plex-mono-latin-500-normal.woff2", weight: "500" },
+  ],
   variable: "--font-plex-mono",
-  weight: ["400", "500"],
-  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
