@@ -3,7 +3,7 @@ import Link from "next/link";
 const questions: { q: string; a: React.ReactNode }[] = [
   {
     q: "What does the patient actually receive?",
-    a: "A short, polite text or email in your practice's name and your own words — for example \"Hi Priya, just checking in about the implant we quoted…\". You choose how many go and when (3 days, 1 week and 1 month after the quote, say). Every message says how to opt out, and it stops as soon as they book, decline or reply STOP.",
+    a: "A short, polite text or email in your practice's name and your own words — for example \"Hi Priya, just checking in about the treatment we discussed…\". The default wording doesn't name the treatment, so nothing private shows on a lock screen. You choose how many go and when (3 days, 1 week and 1 month after the quote, say). Every message says how to opt out, and it stops as soon as they book, decline or reply STOP.",
   },
   {
     q: "Is it GDPR and PECR compliant?",

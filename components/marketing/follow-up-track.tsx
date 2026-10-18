@@ -16,12 +16,12 @@ const STOPS: Stop[] = [
   {
     kind: "sms",
     when: "Day 3",
-    body: "Hi Priya, just checking in about the implant we quoted at Riverside Dental. Ready to book, or have questions? Reply STOP to opt out.",
+    body: "Hi Priya, just checking in about the treatment we discussed at Riverside Dental. Ready to book, or have questions? Reply STOP to opt out.",
   },
   {
     kind: "sms",
     when: "Day 7",
-    body: "Hi Priya, your implant quote from Riverside Dental is still open. Happy to talk it through before you decide. Reply STOP to opt out.",
+    body: "Hi Priya, your treatment plan from Riverside Dental is still open. Happy to talk it through before you decide. Reply STOP to opt out.",
   },
   {
     kind: "event",

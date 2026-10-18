@@ -22,7 +22,7 @@ export function Hero() {
             </LinkButton>
           </div>
           <p className="mt-6 text-sm text-teal-200">
-            For UK practices on Dentally, SOE, R4 and CareStack. Patient data stays in the UK.
+            For UK practices on Dentally, SOE, R4 and CareStack. Patient records are stored in the UK.
           </p>
         </div>
 

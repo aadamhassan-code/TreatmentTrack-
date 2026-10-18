@@ -10,8 +10,8 @@ const FACTS = [
     body: "Every message says how to opt out. One STOP reply cancels everything still waiting to go to that patient.",
   },
   {
-    title: "Held in the UK",
-    body: "Patient data is stored and processed in London. No clinical notes, X-rays or medical history, ever.",
+    title: "Stored in the UK",
+    body: "Patient records are stored in London. No clinical notes, X-rays or medical history, ever.",
   },
 ];
 

@@ -32,6 +32,8 @@ export interface Patient {
   phone: string;
   email: string | null;
   opted_out_at: string | null;
+  /** Set when the patient was erased (details removed, do-not-contact marker kept). */
+  erased_at?: string | null;
   created_at: string;
 }
 
@@ -91,5 +93,7 @@ export interface Settings {
   sequence_days: number[];
   /** Booked quotes go on the Cases board automatically. */
   cases_auto_start: boolean;
+  /** Inactive patients are erased automatically after this many months. */
+  retention_months: number;
   updated_at: string;
 }

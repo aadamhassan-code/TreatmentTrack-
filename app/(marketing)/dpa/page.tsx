@@ -48,7 +48,9 @@ export default function DpaPage() {
           Every practice&rsquo;s data is isolated by database row-level security; consent records are
           append-only so history cannot be rewritten; practice management system credentials are
           encrypted (AES-256-GCM) before storage and are unreadable to signed-in users; all traffic
-          is encrypted in transit; and the database and application run in UK (London) regions.
+          is encrypted in transit; the database and application run in UK (London) regions; staff
+          can protect their sign-in with two-factor authentication; and erasures and data exports
+          are written to an audit log the practice owner can see.
           Access within TreatmentTrack is limited to what is needed to operate and support the
           service.
         </p>
@@ -59,8 +61,8 @@ export default function DpaPage() {
         <ul className="list-disc space-y-1 pl-5">
           <li>Supabase — database and authentication hosting (London, UK)</li>
           <li>Vercel — application hosting (served from London)</li>
-          <li>Twilio — SMS and WhatsApp message delivery</li>
-          <li>Resend — email message delivery</li>
+          <li>Twilio — SMS and WhatsApp message delivery (USA; UK Extension to the EU-US Data Privacy Framework)</li>
+          <li>Resend — email message delivery (USA; UK Extension to the EU-US Data Privacy Framework)</li>
           <li>Stripe — practice billing only; no patient data</li>
         </ul>
         <p>
