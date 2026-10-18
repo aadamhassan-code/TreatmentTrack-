@@ -7,7 +7,7 @@ export function Hero() {
     <section className="mx-auto max-w-6xl px-6 pb-20 pt-14 text-center md:pt-20">
       <p className="inline-flex items-center gap-2 rounded-full border border-teal-100 py-1 pl-1 pr-3 text-[13px] text-ink-500">
         <span className="rounded-full bg-sage px-2 py-0.5 text-xs font-semibold text-[#1c3829]">{BUILT_BY}</span>
-        For Dentally &amp; SOE practices
+        For Dentally, SOE &amp; CareStack practices
       </p>
       <h1 className="mx-auto mt-6 max-w-[15ch] text-[44px] font-bold leading-none tracking-[-0.045em] text-ink-900 sm:text-6xl md:text-[76px]">
         Every quote, every case,{" "}

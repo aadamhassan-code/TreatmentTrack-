@@ -128,6 +128,17 @@ export default async function SettingsPage() {
               )}
             </div>
             <div className="border-t border-ink-900/6 pt-5">
+              <p className="mb-1 text-sm font-semibold text-ink-900">CareStack</p>
+              <p className="text-sm text-ink-500">
+                In CareStack, run the <strong>Treatment Tracker</strong> report (System Menu → Operational Reports)
+                with <strong>Scheduled Status</strong> set to <strong>Unscheduled</strong>, download it as CSV, and use{" "}
+                <a href="/treatments/import" className="font-medium text-teal-700 underline">
+                  Import CSV
+                </a>{" "}
+                — no editing needed. Step-by-step instructions are on the import page.
+              </p>
+            </div>
+            <div className="border-t border-ink-900/6 pt-5">
               <p className="mb-1 text-sm font-semibold text-ink-900">Software of Excellence (Exact / R4)</p>
               <p className="text-sm text-ink-500">
                 SOE doesn&rsquo;t offer a way for other software to connect directly. Instead, run your outstanding

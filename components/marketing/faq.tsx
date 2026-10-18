@@ -22,8 +22,8 @@ const questions: { q: string; a: React.ReactNode }[] = [
     a: "Click Pause and pick the date. Nothing is sent until then; on that day the first message goes and the rest follow your schedule.",
   },
   {
-    q: "Do we need Dentally or SOE?",
-    a: "No. Add quotes in a few seconds, or import a spreadsheet exported from any practice software. A direct, read-only Dentally connection is coming, so unbooked treatment plans come in by themselves and quotes close when the patient is booked.",
+    q: "Do we need Dentally, SOE or CareStack?",
+    a: "No. Add quotes in a few seconds, or import a spreadsheet exported from any practice software — CareStack's Treatment Tracker report imports exactly as it downloads. A direct, read-only Dentally connection is coming, so unbooked treatment plans come in by themselves and quotes close when the patient is booked.",
   },
   {
     q: "Can an associate start using it without the practice owner?",

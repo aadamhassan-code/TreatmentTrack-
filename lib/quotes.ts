@@ -157,7 +157,7 @@ export async function saveQuotes<K>(
         id: treatmentId,
         practice_id: practiceId,
         patient_id: q.patientId,
-        treatment_type: q.treatmentType,
+        treatment_type: q.treatmentType.slice(0, 120),
         value_pence: q.valuePence,
         quoted_on: q.quotedOn,
         status: "in_sequence",

@@ -102,3 +102,47 @@ describe("mobile numbers", () => {
     expect(rows[0].errors.join()).toContain("isn't a mobile number");
   });
 });
+
+describe("CareStack Treatment Tracker export", () => {
+  const head =
+    "Patient Name,Patient ID,Facility,Email,Mobile Number,Proposed Date,Tx Location,Tx Provider,Date of Service,Code,Code Description,Tooth/Area,Surface,Code Status,Scheduled Status,Appt Date,Est. Fee,Last DOS";
+  const row = (name: string, mobile: string, date: string, desc: string, status: string, sched: string, fee: string) =>
+    `${name},P1,,${name.split(" ")[0].toLowerCase()}@example.com,${mobile},${date},DIN,Dr Sam Patel,,X1,${desc},UL6,,${status},${sched},,"${fee}",`;
+
+  test("imports as downloaded, one quote per patient visit", () => {
+    const csv = [
+      head,
+      row("Jo Bloggs", "07700 900123", "01/10/2026", "Implant - single", "Accepted", "Unscheduled", "£2,000.00"),
+      row("Jo Bloggs", "07700 900123", "01/10/2026", "Implant crown", "Accepted", "Unscheduled", "£800.00"),
+      row("Ann Lee", "07700 900456", "02/10/2026", "Veneer", "Proposed", "Unscheduled", "£450.00"),
+    ].join("\n");
+    const { fileErrors, rows } = parseImport(csv, TODAY);
+    expect(fileErrors).toEqual([]);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      patientName: "Jo Bloggs",
+      phone: "+447700900123",
+      treatmentType: "Implant - single + Implant crown",
+      valuePence: 280000,
+      quotedOn: "2026-10-01",
+      dentistName: "Dr Sam Patel",
+      mergedLines: [3],
+      errors: [],
+    });
+    expect(rows[1]).toMatchObject({ patientName: "Ann Lee", valuePence: 45000, errors: [] });
+  });
+
+  test("skips items already scheduled, completed or rejected", () => {
+    const csv = [
+      head,
+      row("A One", "07700 900001", "01/10/2026", "Crown", "Accepted", "Scheduled", "500"),
+      row("B Two", "07700 900002", "01/10/2026", "Crown", "Completed", "Unscheduled", "500"),
+      row("C Three", "07700 900003", "01/10/2026", "Crown", "Rejected", "Unscheduled", "500"),
+    ].join("\n");
+    expect(parseImport(csv, TODAY).rows.map((r) => r.errors[0])).toEqual([
+      "Already booked in (scheduled)",
+      "Treatment already completed",
+      "Patient turned this treatment down",
+    ]);
+  });
+});

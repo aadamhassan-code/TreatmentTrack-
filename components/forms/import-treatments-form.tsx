@@ -157,7 +157,9 @@ export function ImportTreatmentsForm() {
                     <tbody>
                       {preview.rows.map((r) => (
                         <tr key={r.line} className="border-b border-ink-900/6 last:border-0 align-top">
-                          <td className="px-3 py-2 font-mono text-xs text-ink-500">{r.line}</td>
+                          <td className="px-3 py-2 font-mono text-xs text-ink-500">
+                            {[r.line, ...r.mergedLines].join(", ")}
+                          </td>
                           <td className="px-3 py-2">{r.patientName || "—"}</td>
                           <td className="px-3 py-2 font-mono text-xs">{r.phone || "—"}</td>
                           <td className="px-3 py-2">{r.treatmentType || "—"}</td>
@@ -167,7 +169,9 @@ export function ImportTreatmentsForm() {
                           <td className="px-3 py-2">{formatDate(r.quotedOn)}</td>
                           <td className="px-3 py-2">
                             {r.errors.length === 0 ? (
-                              <span className="text-teal-700">Ready</span>
+                              <span className="text-teal-700">
+                                {r.mergedLines.length ? `Ready · ${r.mergedLines.length + 1} items combined` : "Ready"}
+                              </span>
                             ) : (
                               <span className="flex items-start gap-1 text-clay-700">
                                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -252,6 +256,44 @@ function PmsExportHelp() {
           <strong>Appointment status</strong> to <strong>Has unbooked treatment</strong> (Dentally&rsquo;s Unbooked
           Treatment report). They&rsquo;ve said yes, so add them to the Cases board rather than following them up here.
         </p>
+      </details>
+      <details className="rounded-lg border border-ink-900/10 bg-cream-50 px-4 py-3">
+        <summary className="cursor-pointer text-sm font-medium text-ink-900">How to get this list from CareStack</summary>
+        <ol className={`${step} mt-3`}>
+          <li>
+            In CareStack, open the <strong>System Menu</strong> and choose <strong>Operational Reports</strong> (under{" "}
+            <strong>Insights</strong>), then open the <strong>Treatment Tracker</strong> report.
+          </li>
+          <li>
+            Set the filters:
+            <ul className="mt-1 list-disc space-y-0.5 pl-5">
+              <li>
+                <strong>Appt. Date</strong>: the last 3 months (longer ranges go to Scheduled Downloads instead of
+                appearing straight away).
+              </li>
+              <li>
+                <strong>Appt. Location</strong>: your practice.
+              </li>
+              <li>
+                <strong>Scheduled Status</strong>: <strong>Unscheduled</strong> — treatment not yet booked in.
+              </li>
+              <li>
+                <strong>Code Status</strong>: accepted or proposed codes, leaving out completed and rejected ones.
+              </li>
+              <li>
+                <strong>Treatment Provider</strong>: one dentist, or leave it as everyone.
+              </li>
+            </ul>
+          </li>
+          <li>
+            Click <strong>Download Report As</strong> and choose <strong>CSV</strong>.
+          </li>
+          <li>
+            Open it and delete anyone who wasn&rsquo;t offered an opt-out, then choose the file below — no need to
+            rename any columns. CareStack lists each treatment item on its own row; TreatmentTrack combines items for
+            the same patient and date into one quote, and skips anything already scheduled, completed or rejected.
+          </li>
+        </ol>
       </details>
       <details className="rounded-lg border border-ink-900/10 bg-cream-50 px-4 py-3">
         <summary className="cursor-pointer text-sm font-medium text-ink-900">

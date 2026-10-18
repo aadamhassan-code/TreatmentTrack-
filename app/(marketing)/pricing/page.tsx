@@ -52,7 +52,7 @@ export default function PricingPage() {
           </div>
           <div>
             <dt className="font-medium text-ink-900">
-              Is this a replacement for Dentally or SOE?
+              Is this a replacement for Dentally, SOE or CareStack?
             </dt>
             <dd className="mt-1 text-sm text-ink-500">
               No — it sits alongside your practice management software and

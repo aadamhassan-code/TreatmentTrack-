@@ -10,19 +10,36 @@ export const TEMPLATE_CSV =
   "Fatima Ahmed,07700 900123,fatima@example.com,Dental implant,2400,01/10/2026,yes\n" +
   "James Wilson,07700 900456,,Invisalign,3200,15/09/2026,yes\n";
 
-type Field = "patientName" | "phone" | "email" | "treatmentType" | "value" | "quoteDate" | "optOutOffered" | "dentist";
+type Field =
+  | "patientName"
+  | "phone"
+  | "email"
+  | "treatmentType"
+  | "value"
+  | "quoteDate"
+  | "optOutOffered"
+  | "dentist"
+  | "scheduledStatus"
+  | "codeStatus";
 
 // Header names we recognise, after lower-casing and removing spaces/punctuation.
+// Includes the column names in CareStack's Treatment Tracker report, so its
+// download can be imported as it is.
 const HEADER_ALIASES: Record<Field, string[]> = {
   patientName: ["patientname", "name", "patient", "fullname", "patientfullname"],
   phone: ["phone", "mobile", "mobilenumber", "phonenumber", "telephone", "tel", "mobilephone"],
   email: ["email", "emailaddress", "patientemail"],
-  treatmentType: ["treatmenttype", "treatment", "treatmentplan", "procedure", "item"],
-  value: ["value", "quotedvalue", "quotevalue", "amount", "price", "fee", "total", "cost"],
-  quoteDate: ["quotedate", "quotedon", "date", "datequoted", "plandate"],
+  treatmentType: ["treatmenttype", "treatment", "treatmentplan", "procedure", "item", "codedescription", "description"],
+  value: ["value", "quotedvalue", "quotevalue", "amount", "price", "fee", "total", "cost", "estfee", "estimatedfee"],
+  quoteDate: ["quotedate", "quotedon", "date", "datequoted", "plandate", "proposeddate"],
   optOutOffered: ["optoutoffered", "optout", "consent", "softoptin"],
-  dentist: ["dentist", "clinician", "practitioner", "treatingdentist", "provider"],
+  dentist: ["dentist", "clinician", "practitioner", "treatingdentist", "provider", "txprovider", "treatmentprovider"],
+  scheduledStatus: ["scheduledstatus"],
+  codeStatus: ["codestatus"],
 };
+
+/** Longest treatment description kept; longer combined ones are shortened. */
+export const MAX_TREATMENT_LENGTH = 120;
 
 const REQUIRED: { field: Field; label: string }[] = [
   { field: "patientName", label: "patient name" },
@@ -43,6 +60,8 @@ export interface ImportRow {
   quotedOn: string;
   /** As written in the file's dentist column, if it has one. */
   dentistName: string | null;
+  /** Later rows for the same patient and date that were combined into this quote. */
+  mergedLines: number[];
   errors: string[];
 }
 
@@ -153,6 +172,14 @@ export function parseImport(text: string, today: string): ParsedImport {
     else if (quotedOn > today) errors.push("Quote date is in the future");
     else if (quotedOn < oldest) errors.push(`Quote is more than ${MAX_QUOTE_AGE_MONTHS} months old`);
 
+    // Practice software exports (e.g. CareStack) can include items that are
+    // already booked, finished or turned down — those aren't followed up.
+    const scheduled = cell(r, "scheduledStatus").toLowerCase();
+    if (scheduled === "scheduled") errors.push("Already booked in (scheduled)");
+    const status = cell(r, "codeStatus").toLowerCase();
+    if (/complete/.test(status)) errors.push("Treatment already completed");
+    else if (/reject|declin/.test(status)) errors.push("Patient turned this treatment down");
+
     // If the file records whether an opt-out was offered, every row must say yes.
     if (columns.has("optOutOffered") && !YES.has(cell(r, "optOutOffered").toLowerCase())) {
       errors.push("Opt-out column doesn't say yes for this quote");
@@ -173,11 +200,48 @@ export function parseImport(text: string, today: string): ParsedImport {
       valuePence: valuePence ?? 0,
       quotedOn: quotedOn ?? today,
       dentistName: cell(r, "dentist") || null,
+      mergedLines: [],
       errors,
     };
   });
 
-  return { fileErrors: [], rows };
+  return { fileErrors: [], rows: combineVisits(rows) };
+}
+
+/**
+ * Some practice software (e.g. CareStack) lists each item of a treatment
+ * plan on its own row — an implant and its crown are two rows. Different
+ * treatments quoted to the same patient on the same day become one quote,
+ * so the patient gets one set of follow-ups, not one per item.
+ */
+function combineVisits(rows: ImportRow[]): ImportRow[] {
+  const firstForVisit = new Map<string, ImportRow>();
+  const out: ImportRow[] = [];
+  for (const row of rows) {
+    if (row.errors.length) {
+      out.push(row);
+      continue;
+    }
+    const key = `${row.phone}|${row.quotedOn}`;
+    const first = firstForVisit.get(key);
+    const types = first?.treatmentType.toLowerCase().split(" + ") ?? [];
+    if (!first || types.includes(row.treatmentType.toLowerCase())) {
+      if (!first) firstForVisit.set(key, row);
+      out.push(row);
+      continue;
+    }
+    first.treatmentType = `${first.treatmentType} + ${row.treatmentType}`;
+    first.valuePence += row.valuePence;
+    first.mergedLines.push(row.line);
+    first.email ??= row.email;
+    first.dentistName ??= row.dentistName;
+  }
+  for (const row of out) {
+    if (row.treatmentType.length > MAX_TREATMENT_LENGTH) {
+      row.treatmentType = `${row.treatmentType.slice(0, MAX_TREATMENT_LENGTH - 1).trimEnd()}…`;
+    }
+  }
+  return out;
 }
 
 /** "Dr. Sam Patel" and "sam patel" match; titles, dots and case are ignored. */

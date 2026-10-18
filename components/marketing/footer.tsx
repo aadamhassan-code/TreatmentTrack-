@@ -10,7 +10,7 @@ export function MarketingFooter() {
               TreatmentTrack
             </p>
             <p className="mt-2 text-sm text-ink-500">
-              Built in the UK for UK dental practices running Dentally or SOE.
+              Built in the UK for UK dental practices running Dentally, SOE or CareStack.
               Recovers quoted-but-declined treatment through PECR-compliant,
               consent-gated follow-up — not generic recall reminders.
             </p>
