@@ -1,5 +1,5 @@
 const problems = [
-  "The treatment coordinator quotes the case, the patient says “I'll think about it,” and nobody owns the follow-up after that.",
+  "The treatment coordinator/dentist quotes the case, the patient says “I'll think about it,” and nobody owns the follow-up after that.",
   "Recall software from Dentally or SOE reminds patients about their next check-up — it was never built to chase a specific declined quote.",
   "By the time anyone remembers to call back, the quote is six weeks old, the patient has half-forgotten it, and the treatment coordinator has forty other things to do.",
 ];
