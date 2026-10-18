@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Young_Serif, Inter, IBM_Plex_Mono } from "next/font/google";
+import { RegisterServiceWorker } from "@/components/pwa/register-sw";
 import "./globals.css";
 
 const youngSerif = Young_Serif({
@@ -24,7 +25,6 @@ export const metadata: Metadata = {
   description:
     "TreatmentTrack follows up quoted-but-declined dental treatment plans by SMS, WhatsApp and email until patients book or opt out — built for UK PECR/GDPR consent rules and Dentally, SOE and CareStack practices.",
   applicationName: "TreatmentTrack",
-  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -44,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-full flex flex-col font-sans bg-cream-50 text-ink-900 antialiased">
         {children}
+        <RegisterServiceWorker />
       </body>
     </html>
   );
