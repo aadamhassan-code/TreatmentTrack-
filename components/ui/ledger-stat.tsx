@@ -21,17 +21,17 @@ export function LedgerStat({
       )}
     >
       <div className="flex items-baseline justify-between">
-        <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-ink-500">
+        <p className="text-[13px] font-medium text-ink-500">
           {label}
         </p>
         {accent && (
-          <span className="h-1.5 w-1.5 rounded-full bg-gold-500" aria-hidden />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#4dab6f]" aria-hidden />
         )}
       </div>
       <p
         className={cn(
-          "mt-2 font-mono text-4xl font-medium tabular-nums",
-          accent ? "text-gold-700" : "text-teal-900"
+          "mt-2 text-4xl font-semibold tracking-tight tabular-nums",
+          accent ? "text-[#2b7a4b]" : "text-ink-900"
         )}
       >
         {value}

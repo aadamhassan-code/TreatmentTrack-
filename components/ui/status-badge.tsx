@@ -4,31 +4,31 @@ import type { DisplayStatus } from "@/lib/treatment-status";
 const config: Record<DisplayStatus, { label: string; className: string }> = {
   in_sequence: {
     label: "In sequence",
-    className: "bg-teal-100 text-teal-800",
+    className: "bg-sky text-ink-900",
   },
   converted: {
     label: "Booked",
-    className: "bg-gold-200 text-gold-700",
+    className: "bg-sage text-ink-900",
   },
   declined: {
     label: "Declined",
-    className: "bg-ink-900/6 text-ink-700",
+    className: "bg-teal-100 text-ink-700",
   },
   lost: {
     label: "Lost",
-    className: "bg-clay-100 text-clay-700",
+    className: "bg-rose text-ink-900",
   },
   future_intent: {
     label: "Paused",
-    className: "bg-ink-900/6 text-ink-700",
+    className: "bg-lilac text-ink-900",
   },
   opted_out: {
     label: "Opted out",
-    className: "bg-clay-100 text-clay-700",
+    className: "bg-rose text-ink-900",
   },
   messages_finished: {
     label: "Messages finished",
-    className: "bg-ink-900/6 text-ink-700",
+    className: "bg-teal-100 text-ink-700",
   },
 };
 
@@ -37,7 +37,7 @@ export function StatusBadge({ status }: { status: DisplayStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium tracking-wide",
+        "inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium",
         c.className
       )}
     >

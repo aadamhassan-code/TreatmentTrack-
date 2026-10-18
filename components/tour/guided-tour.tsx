@@ -150,7 +150,7 @@ export function GuidedTour({ steps, autoStart }: { steps: TourStep[]; autoStart:
       {/* Dim everything except the highlighted element; clicks outside the card are ignored. */}
       {highlight ? (
         <div
-          className="pointer-events-none fixed rounded-xl ring-2 ring-gold-500 transition-all duration-200"
+          className="pointer-events-none fixed rounded-xl ring-2 ring-[#2383E2] transition-all duration-200"
           style={{ ...highlight, boxShadow: "0 0 0 9999px rgba(15, 23, 42, 0.55)" }}
         />
       ) : (
@@ -199,7 +199,7 @@ export function TourReplayButton({ onClick }: { onClick?: () => void }) {
         onClick?.();
         window.dispatchEvent(new Event(START_TOUR_EVENT));
       }}
-      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-teal-200 transition-colors hover:bg-cream-50/5 hover:text-cream-50"
+      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 transition-colors hover:bg-teal-100/70 hover:text-ink-900"
     >
       <span aria-hidden className="flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px]">
         ?

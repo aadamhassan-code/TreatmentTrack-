@@ -8,6 +8,9 @@ import { daysAtStage, describeDuration, isStuck, type CaseBoard, type CaseEvent,
 
 const COMPLETED = "completed";
 
+/** Pastel label colours for stage columns, in board order. */
+const STAGE_TAGS = ["bg-lilac", "bg-sky", "bg-butter", "bg-rose", "bg-teal-100"];
+
 type Move = { id: string; to: string };
 
 /** Which column a case is in: a stage id, or "completed". */
@@ -93,13 +96,12 @@ export function CaseBoardView({
                   if (c) move(c, col.id);
                 }}
                 className={cn(
-                  "flex w-64 shrink-0 flex-col rounded-xl border bg-ink-900/[0.03] p-3 transition-colors",
-                  dragOver === col.id ? "border-teal-700 bg-teal-50" : "border-ink-900/8",
-                  col.id === COMPLETED && "bg-gold-100/40"
+                  "flex w-64 shrink-0 flex-col rounded-xl border bg-teal-50 p-2.5 transition-colors",
+                  dragOver === col.id ? "border-[#2383E2] bg-sky/30" : "border-transparent"
                 )}
               >
                 <header className="mb-3 flex items-baseline justify-between gap-2 px-1">
-                  <h3 className="text-sm font-semibold text-ink-900">{col.name}</h3>
+                  <h3 className={cn("rounded px-1.5 py-px text-[13px] font-medium text-ink-900", col.id === COMPLETED ? "bg-sage" : STAGE_TAGS[i % STAGE_TAGS.length])}>{col.name}</h3>
                   <span className="text-xs text-ink-500">{list.length}</span>
                 </header>
                 {col.stage?.expected_days && (

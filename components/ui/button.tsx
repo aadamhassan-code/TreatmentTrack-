@@ -5,18 +5,16 @@ type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const variantClasses: Record<Variant, string> = {
-  primary:
-    "bg-teal-900 text-cream-50 hover:bg-teal-800 shadow-sm shadow-teal-900/20",
-  secondary:
-    "bg-transparent text-teal-900 border border-teal-900/25 hover:border-teal-900/60 hover:bg-teal-50",
-  ghost: "bg-transparent text-teal-900 hover:bg-teal-900/5",
-  danger: "bg-clay-600 text-cream-50 hover:bg-clay-700",
+  primary: "bg-teal-900 text-white hover:bg-teal-700",
+  secondary: "bg-teal-50 text-ink-900 hover:bg-teal-100",
+  ghost: "bg-transparent text-ink-900 hover:bg-teal-50",
+  danger: "bg-clay-600 text-white hover:bg-clay-700",
 };
 
 const sizeClasses: Record<Size, string> = {
   sm: "px-3 py-1.5 text-sm rounded-md",
   md: "px-4 py-2.5 text-sm rounded-lg",
-  lg: "px-6 py-3.5 text-base rounded-lg",
+  lg: "px-5 py-3 text-[15px] rounded-[10px]",
 };
 
 const base =

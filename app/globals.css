@@ -1,49 +1,63 @@
 @import "tailwindcss";
 
+/*
+ * Clean, paper-white system: black ink, quiet greys, and soft pastel
+ * labels for stages and statuses. The colour names are kept from the
+ * original palette so every screen picks the new look up at once:
+ * "teal" is now the ink/neutral scale, "cream" is paper, "gold" is the
+ * butter highlight and "clay" is the overdue/lost red.
+ */
 @theme {
-  /* Deep teal — primary brand color */
-  --color-teal-950: #07211f;
-  --color-teal-900: #0d3532;
-  --color-teal-800: #124742;
-  --color-teal-700: #185c54;
-  --color-teal-600: #1f7268;
-  --color-teal-500: #2b8c7e;
-  --color-teal-400: #4ba699;
-  --color-teal-300: #85c2b6;
-  --color-teal-200: #bcded4;
-  --color-teal-100: #ddeee8;
-  --color-teal-50: #f0f8f4;
+  /* Ink — primary brand colour (buttons, active states) */
+  --color-teal-950: #111110;
+  --color-teal-900: #191919;
+  --color-teal-800: #2f2f2d;
+  --color-teal-700: #37352f;
+  --color-teal-600: #55534e;
+  --color-teal-500: #6f6e69;
+  --color-teal-400: #91908b;
+  --color-teal-300: #b4b3ae;
+  --color-teal-200: #d3d2ce;
+  --color-teal-100: #ededeb;
+  --color-teal-50: #f7f7f5;
 
-  /* Warm gold — accent, used sparingly for money/attention */
-  --color-gold-700: #8a6a17;
-  --color-gold-600: #ac871f;
-  --color-gold-500: #c9a227;
-  --color-gold-400: #ddbb55;
-  --color-gold-300: #e9d189;
-  --color-gold-200: #f2e3b8;
-  --color-gold-100: #f8f0d9;
+  /* Butter — highlight, used sparingly for money/attention */
+  --color-gold-700: #7a5a12;
+  --color-gold-600: #a37a1c;
+  --color-gold-500: #e3a83a;
+  --color-gold-400: #efc163;
+  --color-gold-300: #f6d796;
+  --color-gold-200: #fdecc8;
+  --color-gold-100: #fef6e4;
 
-  /* Cream — background */
-  --color-cream-200: #efe6d2;
-  --color-cream-100: #f5efdf;
-  --color-cream-50: #faf6ec;
-  --color-cream-0: #fdfbf5;
+  /* Paper — backgrounds */
+  --color-cream-200: #ededeb;
+  --color-cream-100: #f7f7f5;
+  --color-cream-50: #ffffff;
+  --color-cream-0: #ffffff;
 
-  /* Clay — status/lost, warm rather than alarming red */
-  --color-clay-700: #7a3a2c;
-  --color-clay-600: #a34b36;
-  --color-clay-500: #c05f45;
-  --color-clay-100: #f3e0d8;
+  /* Red — overdue, lost, errors */
+  --color-clay-700: #9f2f2a;
+  --color-clay-600: #c4403a;
+  --color-clay-500: #e16f64;
+  --color-clay-100: #ffe2dd;
 
-  /* Ink — near-black warm text color */
-  --color-ink-900: #1c1a15;
-  --color-ink-700: #3a362c;
-  --color-ink-500: #6b6558;
-  --color-ink-300: #a49d8c;
+  /* Text */
+  --color-ink-900: #191919;
+  --color-ink-700: #37352f;
+  --color-ink-500: #787774;
+  --color-ink-300: #acaba7;
 
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  /* Pastel labels (stages, statuses) */
+  --color-lilac: #e8deee;
+  --color-sky: #d3e5ef;
+  --color-sage: #dbeddb;
+  --color-butter: #fdecc8;
+  --color-rose: #ffe2dd;
+
+  --font-display: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 html {
@@ -55,13 +69,23 @@ body {
   color: var(--color-ink-900);
 }
 
-/* Ledger motif: a faint horizontal rule pattern behind money figures,
-   evoking a paper ledger page rather than a generic stat card. */
+/* Headings: heavy and tightly set. Unlayered, so it wins over the
+   font-medium utility many headings carry. */
+.font-display {
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+/* Money figures sit on a quiet wash rather than ruled lines. */
 .ledger-lines {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 27px,
-    color-mix(in srgb, var(--color-teal-900) 8%, transparent) 28px
-  );
+  background: var(--color-cream-0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
