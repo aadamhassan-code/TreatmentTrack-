@@ -61,7 +61,7 @@ export function AddCaseForm({
       className="space-y-4 rounded-xl border border-ink-900/8 bg-cream-0 p-5"
     >
       <div>
-        <h2 className="font-display text-lg font-medium text-ink-900">Add a patient to the board</h2>
+        <h2 className="font-display text-lg text-ink-900">Add a patient to the board</h2>
         <p className="mt-1 text-sm text-ink-500">
           For patients who booked straight away or are already part-way through treatment. Booked quotes are added
           for you.

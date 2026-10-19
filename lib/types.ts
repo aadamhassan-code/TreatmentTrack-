@@ -71,7 +71,7 @@ export interface Treatment {
   dentist_user_id: string | null;
   // joined
   patient?: Patient;
-  sequence_steps?: { status: string; error: string | null }[];
+  sequence_steps?: { status: string; error: string | null; scheduled_for?: string }[];
 }
 
 export interface MessageTemplate {

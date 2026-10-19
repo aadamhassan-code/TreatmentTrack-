@@ -6,7 +6,7 @@ export function MarketingFooter() {
       <div className="mx-auto max-w-6xl px-6 py-12">
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div className="max-w-sm">
-            <p className="font-display text-lg font-medium text-teal-900">
+            <p className="font-display text-lg text-teal-900">
               TreatmentTrack
             </p>
             <p className="mt-2 text-sm text-ink-500">

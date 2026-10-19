@@ -58,3 +58,11 @@ export function isTextableNumber(e164: string): boolean {
   if (e164.startsWith("+44")) return /^\+447\d{9}$/.test(e164);
   return /^\+\d{10,15}$/.test(e164);
 }
+
+/** ISO timestamps a number of days either side of now, e.g. for "this week" windows. */
+export function weekWindow(now: Date = new Date(), days = 7): { ahead: string; ago: string } {
+  return {
+    ahead: new Date(now.getTime() + days * 86_400_000).toISOString(),
+    ago: new Date(now.getTime() - days * 86_400_000).toISOString(),
+  };
+}

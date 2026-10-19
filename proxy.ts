@@ -62,7 +62,9 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && !isPublicPath(request.nextUrl.pathname)) {
+  // The dev-only preview page (404s in production builds) needs no login.
+  const devPreview = process.env.NODE_ENV !== "production" && request.nextUrl.pathname.startsWith("/dev/");
+  if (!user && !devPreview && !isPublicPath(request.nextUrl.pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

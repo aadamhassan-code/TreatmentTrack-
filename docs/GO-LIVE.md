@@ -6,8 +6,12 @@ Worked through top to bottom, this takes about 30 minutes.
 ## 1. Database
 
 - [ ] Supabase project exists (London region) and **all** migrations in
-      `supabase/migrations/` have been run **in order** (0001 → 0007).
+      `supabase/migrations/` have been run **in order** (0001 → 0009).
       Re-running one that's already applied fails loudly — that's fine.
+- [ ] **New on 19 Oct:** run `0008_gdpr.sql` then `0009_margins.sql` in the
+      Supabase SQL editor (paste each file, press Run). Until then the app
+      works but erasure, retention, the audit log, database-enforced
+      two-factor, margins and support-request tagging stay switched off.
 
 ## 2. Vercel environment variables (Production)
 
@@ -73,8 +77,9 @@ submitted in parallel: https://www.dentally.com/en-gb/partners
 
 ## 6. Watch it run
 
-- [ ] `/admin` (as a `PLATFORM_ADMIN_EMAILS` account): sync errors and
-      failed messages surface here.
+- [ ] `/admin` (as a `PLATFORM_ADMIN_EMAILS` account): sync errors,
+      failed messages, sales leads and in-app support requests surface here.
+- [ ] Vercel → Crons should also show `/api/cron/retention` (03:15).
 - [ ] Vercel → Crons: three jobs should show green daily runs
       (07:00 future-intent, 07:30 integrations-sync, 08:00 send-sequence).
 - [ ] Recommended next: connect Sentry (or similar) for error alerting —

@@ -11,7 +11,7 @@ export default async function ApprovalPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-medium text-ink-900">Practice owner approval</h1>
+        <h1 className="font-display text-3xl text-ink-900">Practice owner approval</h1>
         <p className="mt-2 text-sm text-ink-500">
           Follow-up messages go out in {practice.name}&rsquo;s name, and the patients&rsquo; details belong to the
           practice. So before anything is sent, the practice owner (or a manager who can agree on their behalf) needs

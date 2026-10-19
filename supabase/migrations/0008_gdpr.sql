@@ -293,6 +293,8 @@ create or replace function mfa_satisfied()
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select coalesce(auth.jwt() ->> 'aal', 'aal1') = 'aal2'
       or not exists (

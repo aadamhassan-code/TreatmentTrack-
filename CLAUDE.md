@@ -24,3 +24,11 @@ Conventions that matter here:
   `PLATFORM_ADMIN_EMAILS`, strictly read-only.
 - CI (`.github/workflows/ci.yml`) runs lint + tests + build on every PR;
   keep `npm test` green.
+- Shipping a migration: app code must tolerate it not having been run yet
+  (`isMissingSchema()` in `lib/supabase/compat.ts`), because Vercel
+  deploys on merge but migrations are run by hand in Supabase.
+- Patient-data tables carry a restrictive `*_require_mfa_when_enrolled`
+  policy; add one to any new table holding patient data.
+- Margins/costs and dentist shares are owner-only; keep them out of staff
+  and dentist views.
+- `/dev/preview` is a development-only visual harness (404 in production).

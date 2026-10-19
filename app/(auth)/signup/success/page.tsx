@@ -21,7 +21,7 @@ export default async function SignupSuccessPage({
   return (
     <div className="text-center">
       <CheckCircle2 className="mx-auto h-12 w-12 text-teal-600" />
-      <h1 className="mt-4 font-display text-3xl font-medium text-ink-900">
+      <h1 className="mt-4 font-display text-3xl text-ink-900">
         Payment received
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-ink-500">

@@ -63,7 +63,7 @@ export function SignupForm() {
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
         Step 1 of 2
       </p>
-      <h1 className="mt-2 font-display text-3xl font-medium text-ink-900">
+      <h1 className="mt-2 font-display text-3xl text-ink-900">
         Set up {planCopy[plan]?.label ?? "Practice"}
       </h1>
       <p className="mt-2 text-sm text-ink-500">

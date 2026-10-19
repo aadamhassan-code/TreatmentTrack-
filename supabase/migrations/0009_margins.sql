@@ -37,3 +37,11 @@ create policy dentist_pay_rates_require_mfa_when_enrolled on dentist_pay_rates
 -- Typical lab & materials cost as a share of the fee, per kind of treatment.
 alter table case_boards add column lab_cost_pct numeric(5, 2)
   check (lab_cost_pct is null or lab_cost_pct between 0 and 100);
+
+-- ---------------------------------------------------------------------------
+-- Contact requests now say what they're about, so the back office can tell
+-- a support question from a sales lead.
+-- ---------------------------------------------------------------------------
+alter table callback_requests add column topic text not null default 'sales'
+  check (topic in ('sales', 'walkthrough', 'support'));
+alter table callback_requests add column practice_name text check (char_length(practice_name) <= 200);

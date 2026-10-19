@@ -8,6 +8,7 @@ import { displayStatus } from "@/lib/treatment-status";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ErasePatient } from "@/components/patients/erase-patient";
 import type { Patient, Treatment } from "@/lib/types";
+import { isMissingSchema } from "@/lib/supabase/compat";
 
 type Step = {
   step: number;
@@ -45,12 +46,12 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   const { practice, role } = await requireCurrentPractice();
   const supabase = await createClient();
 
-  const { data: patient } = await supabase
-    .from("patients")
-    .select("id, practice_id, full_name, phone, email, opted_out_at, created_at, erased_at")
-    .eq("id", id)
-    .eq("practice_id", practice.id)
-    .maybeSingle();
+  const load = (cols: string) =>
+    supabase.from("patients").select(cols).eq("id", id).eq("practice_id", practice.id).maybeSingle();
+  const base = "id, practice_id, full_name, phone, email, opted_out_at, created_at";
+  let { data: row, error: loadError } = await load(`${base}, erased_at`);
+  if (isMissingSchema(loadError)) ({ data: row, error: loadError } = await load(base));
+  const patient = row as unknown as (Patient & { erased_at?: string | null }) | null;
   if (!patient || patient.erased_at) notFound();
 
   const [{ data: treatments }, { data: consents }, dentists] = await Promise.all([

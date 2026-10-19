@@ -26,7 +26,7 @@ export default async function DentallyReviewPage() {
   return (
     <div className="max-w-5xl space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-medium text-ink-900">From Dentally</h1>
+        <h1 className="font-display text-3xl text-ink-900">From Dentally</h1>
         <p className="mt-2 text-sm text-ink-500">
           Unbooked private treatment plans found in Dentally, highest value first. Nothing is sent until you start
           follow-up here — first confirm each patient was offered an opt-out for follow-up on their plan.

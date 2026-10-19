@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { requireCurrentPractice } from "@/lib/practice";
+import { listTreatingDentists, requireCurrentPractice } from "@/lib/practice";
+import { DentistFilter } from "@/components/dashboard/dentist-filter";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatGBP } from "@/lib/utils";
 import { OPEN_STATUSES } from "@/lib/types";
+import { isMissingSchema } from "@/lib/supabase/compat";
 
 const PAGE_SIZE = 100;
 
@@ -21,29 +23,47 @@ export default async function PatientsPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { practice } = await requireCurrentPractice();
+  const { practice, role, userId, treatsPatients } = await requireCurrentPractice();
   const supabase = await createClient();
   const sp = await searchParams;
   const raw = sp.q;
   const q = typeof raw === "string" ? raw.trim().slice(0, 80) : "";
   const justErased = sp.erased === "1";
+  const rawDentist = typeof sp.dentist === "string" ? sp.dentist : "";
+  const dentistFilter = role === "dentist" ? "" : rawDentist === "me" ? userId : rawDentist;
+  const dentists = role === "dentist" ? [] : await listTreatingDentists(practice.id);
 
-  let query = supabase
-    .from("patients")
-    .select("id, full_name, phone, email, opted_out_at, created_at")
-    .eq("practice_id", practice.id)
-    .is("erased_at", null)
-    .order("created_at", { ascending: false })
-    .limit(PAGE_SIZE);
-  if (q) {
-    // Search by name, or by phone digits ("07700 900123" finds +447700900123).
-    const digits = q.replace(/\D/g, "").replace(/^0/, "");
-    const safe = q.replace(/[%,()]/g, " ");
-    query = digits.length >= 4
-      ? query.or(`full_name.ilike.%${safe}%,phone.ilike.%${digits}%`)
-      : query.ilike("full_name", `%${safe}%`);
+  // Narrowed to one dentist: the patients they've quoted.
+  let onlyIds: string[] | null = null;
+  if (dentistFilter) {
+    let tq = supabase.from("treatments").select("patient_id").eq("practice_id", practice.id).limit(2000);
+    tq = dentistFilter === "unassigned" ? tq.is("dentist_user_id", null) : tq.eq("dentist_user_id", dentistFilter);
+    const { data: rows } = await tq;
+    onlyIds = Array.from(new Set((rows ?? []).map((r) => r.patient_id as string))).slice(0, 300);
   }
-  const { data } = await query;
+
+  const buildQuery = (hideErased: boolean) => {
+    let query = supabase
+      .from("patients")
+      .select("id, full_name, phone, email, opted_out_at, created_at")
+      .eq("practice_id", practice.id)
+      .order("created_at", { ascending: false })
+      .limit(PAGE_SIZE);
+    if (hideErased) query = query.is("erased_at", null);
+    if (onlyIds) query = query.in("id", onlyIds.length ? onlyIds : ["00000000-0000-0000-0000-000000000000"]);
+    if (q) {
+      // Search by name, or by phone digits ("07700 900123" finds +447700900123).
+      const digits = q.replace(/\D/g, "").replace(/^0/, "");
+      const safe = q.replace(/[%,()]/g, " ");
+      query = digits.length >= 4
+        ? query.or(`full_name.ilike.%${safe}%,phone.ilike.%${digits}%`)
+        : query.ilike("full_name", `%${safe}%`);
+    }
+    return query;
+  };
+  let { data, error: listError } = await buildQuery(true);
+  // Before migration 0008 there's no erased_at column.
+  if (isMissingSchema(listError)) ({ data, error: listError } = await buildQuery(false));
   const patients = (data ?? []) as PatientRow[];
 
   const ids = patients.map((p) => p.id);
@@ -62,11 +82,20 @@ export default async function PatientsPage({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl text-ink-900">Patients</h1>
-          <p className="mt-1 text-sm text-ink-500">
+          <p className="mt-1 max-w-[70ch] text-sm text-ink-500">
             Everyone you&rsquo;ve quoted. Open a patient to see their quotes, messages and consent history, or to
             export or erase their data.
           </p>
         </div>
+        {dentists.length > 0 && (
+          <DentistFilter
+            dentists={dentists}
+            value={dentistFilter}
+            myId={treatsPatients ? userId : null}
+            basePath={q ? `/patients?q=${encodeURIComponent(q)}` : "/patients"}
+            mineLabel="My patients"
+          />
+        )}
       </div>
 
       {justErased && (
@@ -76,6 +105,7 @@ export default async function PatientsPage({
       )}
 
       <form className="relative max-w-md" role="search">
+        {dentistFilter && <input type="hidden" name="dentist" value={rawDentist} />}
         <Search aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-300" />
         <label htmlFor="patient-search" className="sr-only">
           Search patients

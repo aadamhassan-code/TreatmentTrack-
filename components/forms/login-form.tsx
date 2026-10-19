@@ -167,7 +167,7 @@ export function LoginForm({ initialStep }: { initialStep?: "verify" } = {}) {
   if (mode === "set-password") {
     return (
       <div>
-        <h1 className="font-display text-3xl font-medium text-ink-900">
+        <h1 className="font-display text-3xl text-ink-900">
           Set your password
         </h1>
         <p className="mt-2 text-sm text-ink-500">

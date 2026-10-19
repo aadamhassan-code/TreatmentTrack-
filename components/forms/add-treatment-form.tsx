@@ -58,8 +58,8 @@ export function AddTreatmentForm({
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-medium text-ink-900">
-          Add a declined quote
+        <h1 className="font-display text-3xl text-ink-900">
+          Add a quote
         </h1>
         <p className="mt-2 text-sm text-ink-500">
           Log a treatment plan the patient hasn&rsquo;t accepted yet so
@@ -268,7 +268,7 @@ export function AddTreatmentForm({
       <input type="hidden" name="reconsent" value={reconsent ? "on" : ""} />
 
       <Button type="submit" size="lg" disabled={pending}>
-        {pending ? "Saving…" : "Add treatment"}
+        {pending ? "Saving…" : "Add quote and start follow-up"}
       </Button>
     </form>
   );

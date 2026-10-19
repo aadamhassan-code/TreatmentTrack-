@@ -165,7 +165,7 @@ export function GuidedTour({ steps, autoStart }: { steps: TourStep[]; autoStart:
         <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
           Step {index + 1} of {steps.length}
         </p>
-        <h2 id="tour-title" className="mt-1 font-display text-lg font-medium text-ink-900">
+        <h2 id="tour-title" className="mt-1 font-display text-lg text-ink-900">
           {step.title}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-ink-700">{step.body}</p>

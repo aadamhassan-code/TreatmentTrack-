@@ -4,6 +4,7 @@ import { fetchAll } from "@/lib/supabase/fetch-all";
 import { Card } from "@/components/ui/card";
 import { formatDate, formatGBP } from "@/lib/utils";
 import { OPEN_STATUSES } from "@/lib/types";
+import { isMissingSchema } from "@/lib/supabase/compat";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,12 @@ interface LeadRow {
   practice_count: number | null;
   status: string;
   created_at: string;
+  topic?: string;
+  practice_name?: string | null;
+  message?: string | null;
 }
+
+const TOPIC_LABEL: Record<string, string> = { sales: "Sales", walkthrough: "Walkthrough", support: "Support" };
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -102,12 +108,13 @@ export default async function AdminOverviewPage() {
           .order("id")
           .range(from, to)
       ),
-      admin
-        .from("callback_requests")
-        .select("id, name, email, phone, practice_count, status, created_at")
-        .order("created_at", { ascending: false })
-        .limit(20)
-        .then(({ data }) => (data ?? []) as LeadRow[]),
+      (async () => {
+        const recent = (cols: string) =>
+          admin.from("callback_requests").select(cols).order("created_at", { ascending: false }).limit(30);
+        let res = await recent("id, name, email, phone, practice_count, status, created_at, topic, practice_name, message");
+        if (isMissingSchema(res.error)) res = await recent("id, name, email, phone, practice_count, status, created_at, message");
+        return (res.data ?? []) as unknown as LeadRow[];
+      })(),
       admin
         .from("pms_quote_candidates")
         .select("id", { count: "exact", head: true })
@@ -252,14 +259,15 @@ export default async function AdminOverviewPage() {
       </section>
 
       <section className="space-y-4">
-        <SectionTitle>Callback leads</SectionTitle>
+        <SectionTitle>Leads and support requests</SectionTitle>
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="border-b border-ink-900/8 text-left text-[13px] text-ink-500">
+                <th className="px-5 py-3 font-medium">Type</th>
                 <th className="px-5 py-3 font-medium">Name</th>
                 <th className="px-5 py-3 font-medium">Contact</th>
-                <th className="px-5 py-3 font-medium">Practices</th>
+                <th className="px-5 py-3 font-medium">Message</th>
                 <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium">Received</th>
               </tr>
@@ -267,19 +275,26 @@ export default async function AdminOverviewPage() {
             <tbody>
               {leads.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-ink-500">
-                    No callback requests yet.
+                  <td colSpan={6} className="px-5 py-8 text-center text-ink-500">
+                    No requests yet.
                   </td>
                 </tr>
               )}
               {leads.map((l) => (
                 <tr key={l.id} className="border-b border-ink-900/5 last:border-0">
-                  <td className="px-5 py-3 font-medium text-ink-900">{l.name}</td>
+                  <td className="px-5 py-3 text-ink-700">{TOPIC_LABEL[l.topic ?? "sales"] ?? l.topic}</td>
+                  <td className="px-5 py-3 font-medium text-ink-900">
+                    {l.name}
+                    {l.practice_name && <span className="block text-[13px] font-normal text-ink-500">{l.practice_name}</span>}
+                  </td>
                   <td className="px-5 py-3 text-ink-700">
                     {l.email}
-                    {l.phone ? ` · ${l.phone}` : ""}
+                    {l.phone && <span className="block text-[13px] text-ink-500">{l.phone}</span>}
+                    {l.practice_count != null && <span className="block text-[13px] text-ink-500">{l.practice_count} practices</span>}
                   </td>
-                  <td className="px-5 py-3 text-ink-700">{l.practice_count ?? "—"}</td>
+                  <td className="max-w-xs px-5 py-3 text-[13px] text-ink-700">
+                    <span className="line-clamp-3">{l.message ?? "–"}</span>
+                  </td>
                   <td className="px-5 py-3 text-ink-700">{l.status}</td>
                   <td className="px-5 py-3 text-ink-500">{formatDate(l.created_at)}</td>
                 </tr>

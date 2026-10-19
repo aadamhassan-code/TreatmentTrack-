@@ -89,7 +89,7 @@ export function DentallyReview({
           <div className="overflow-x-auto rounded-xl border border-ink-900/8 bg-cream-0">
             <table className="w-full min-w-[760px] border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-ink-900/8 text-xs uppercase tracking-wide text-ink-500">
+                <tr className="border-b border-ink-900/8 text-[13px] text-ink-500">
                   <th className="w-10 py-3 pl-5">
                     <input
                       type="checkbox"
