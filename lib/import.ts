@@ -33,7 +33,7 @@ const HEADER_ALIASES: Record<Field, string[]> = {
   value: ["value", "quotedvalue", "quotevalue", "amount", "price", "fee", "total", "cost", "estfee", "estimatedfee"],
   quoteDate: ["quotedate", "quotedon", "date", "datequoted", "plandate", "proposeddate"],
   optOutOffered: ["optoutoffered", "optout", "consent", "softoptin"],
-  dentist: ["dentist", "clinician", "practitioner", "treatingdentist", "provider", "txprovider", "treatmentprovider"],
+  dentist: ["dentist", "clinician", "practitioner", "treatingdentist", "provider", "txprovider", "treatmentprovider", "txclinician", "treatmentclinician"],
   scheduledStatus: ["scheduledstatus"],
   codeStatus: ["codestatus"],
 };
@@ -144,6 +144,10 @@ export function parseImport(text: string, today: string): ParsedImport {
     };
   }
 
+  // Exports that list each treatment item on its own row (e.g. CareStack's
+  // Treatment Tracker) have a code/scheduled status column. There, two
+  // identical rows are two items (a crown on UL1 and on UR1), not a mistake.
+  const itemised = columns.has("scheduledStatus") || columns.has("codeStatus");
   const cell = (r: string[], f: Field) => (columns.has(f) ? (r[columns.get(f)!] ?? "").trim() : "");
   const oldest = monthsBefore(today, MAX_QUOTE_AGE_MONTHS);
   const seen = new Set<string>();
@@ -186,7 +190,7 @@ export function parseImport(text: string, today: string): ParsedImport {
     }
 
     const key = `${phone}|${treatmentType.toLowerCase()}|${valuePence}`;
-    if (errors.length === 0) {
+    if (errors.length === 0 && !itemised) {
       if (seen.has(key)) errors.push("Same patient, treatment and value as an earlier row");
       seen.add(key);
     }
@@ -205,17 +209,18 @@ export function parseImport(text: string, today: string): ParsedImport {
     };
   });
 
-  return { fileErrors: [], rows: combineVisits(rows) };
+  return { fileErrors: [], rows: combineVisits(rows, itemised) };
 }
 
 /**
  * Some practice software (e.g. CareStack) lists each item of a treatment
- * plan on its own row — an implant and its crown are two rows. Different
- * treatments quoted to the same patient on the same day become one quote,
- * so the patient gets one set of follow-ups, not one per item.
+ * plan on its own row — an implant and its crown are two rows. Items quoted
+ * to the same patient on the same day become one quote, so the patient gets
+ * one set of follow-ups, not one per item. In an itemised export, repeated
+ * items are counted ("Crown ×2") and their fees added together.
  */
-function combineVisits(rows: ImportRow[]): ImportRow[] {
-  const firstForVisit = new Map<string, ImportRow>();
+function combineVisits(rows: ImportRow[], itemised: boolean): ImportRow[] {
+  const visits = new Map<string, { row: ImportRow; items: Map<string, { name: string; count: number }> }>();
   const out: ImportRow[] = [];
   for (const row of rows) {
     if (row.errors.length) {
@@ -223,18 +228,30 @@ function combineVisits(rows: ImportRow[]): ImportRow[] {
       continue;
     }
     const key = `${row.phone}|${row.quotedOn}`;
-    const first = firstForVisit.get(key);
-    const types = first?.treatmentType.toLowerCase().split(" + ") ?? [];
-    if (!first || types.includes(row.treatmentType.toLowerCase())) {
-      if (!first) firstForVisit.set(key, row);
+    const item = row.treatmentType.toLowerCase();
+    const visit = visits.get(key);
+    if (!visit) {
+      visits.set(key, { row, items: new Map([[item, { name: row.treatmentType, count: 1 }]]) });
       out.push(row);
       continue;
     }
-    first.treatmentType = `${first.treatmentType} + ${row.treatmentType}`;
-    first.valuePence += row.valuePence;
-    first.mergedLines.push(row.line);
-    first.email ??= row.email;
-    first.dentistName ??= row.dentistName;
+    const existing = visit.items.get(item);
+    if (existing && !itemised) {
+      // Same treatment again on the same day, at a different price: keep it as its own quote.
+      out.push(row);
+      continue;
+    }
+    if (existing) existing.count++;
+    else visit.items.set(item, { name: row.treatmentType, count: 1 });
+    visit.row.valuePence += row.valuePence;
+    visit.row.mergedLines.push(row.line);
+    visit.row.email ??= row.email;
+    visit.row.dentistName ??= row.dentistName;
+  }
+  for (const { row, items } of visits.values()) {
+    if (row.mergedLines.length) {
+      row.treatmentType = [...items.values()].map((i) => (i.count > 1 ? `${i.name} ×${i.count}` : i.name)).join(" + ");
+    }
   }
   for (const row of out) {
     if (row.treatmentType.length > MAX_TREATMENT_LENGTH) {

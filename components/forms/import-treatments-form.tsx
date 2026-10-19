@@ -268,20 +268,23 @@ function PmsExportHelp() {
             Set the filters:
             <ul className="mt-1 list-disc space-y-0.5 pl-5">
               <li>
-                <strong>Appt. Date</strong>: the last 3 months (longer ranges go to Scheduled Downloads instead of
-                appearing straight away).
+                <strong>Appt Date</strong>: the last 3 months (click the arrow after <strong>1M</strong>, or{" "}
+                <strong>Custom</strong>). Longer ranges go to Scheduled Downloads instead of appearing straight away.
               </li>
               <li>
-                <strong>Appt. Location</strong>: your practice.
+                <strong>Appt Location</strong>: your practice.
               </li>
               <li>
                 <strong>Scheduled Status</strong>: <strong>Unscheduled</strong> — treatment not yet booked in.
               </li>
               <li>
-                <strong>Code Status</strong>: accepted or proposed codes, leaving out completed and rejected ones.
+                <strong>Code Status</strong>: untick Completed and Rejected, keep Proposed and Accepted.
               </li>
               <li>
-                <strong>Treatment Provider</strong>: one dentist, or leave it as everyone.
+                <strong>Treatment Clinician</strong>: one dentist, or leave it blank for everyone.
+              </li>
+              <li>
+                <strong>Columns</strong>: leave them all selected.
               </li>
             </ul>
           </li>
@@ -291,7 +294,9 @@ function PmsExportHelp() {
           <li>
             Open it and delete anyone who wasn&rsquo;t offered an opt-out, then choose the file below — no need to
             rename any columns. CareStack lists each treatment item on its own row; TreatmentTrack combines items for
-            the same patient and date into one quote, and skips anything already scheduled, completed or rejected.
+            the same patient and date into one quote (e.g. &ldquo;Crown ×2 + Composite Filling, £2,199&rdquo;), and skips
+            anything already scheduled, completed or rejected. Tip: tick <strong>Save Filter</strong> so next time you can
+            choose <strong>Select Existing</strong>.
           </li>
         </ol>
       </details>

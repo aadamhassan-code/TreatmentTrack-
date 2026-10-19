@@ -146,3 +146,23 @@ describe("CareStack Treatment Tracker export", () => {
     ]);
   });
 });
+
+describe("CareStack UK export (real column layout, made-up patients)", () => {
+  const csv = [
+    "Patient Name,Patient ID,Facility,Email,Mobile Number,Proposed Date,Tx Location,Tx Clinician,Date Of Service,Code,Code Description,Tooth/ Area,Surface,Code Status,Scheduled Status,Appt Date,Est. Fee,Last Date of Service",
+    `"Test Patient","1","","test@example.com", +44-7700900111,24/09/2026,"STAG","Dr. Sam Patel",,"1421","Composite Filling","UL2","M","Proposed","Unscheduled",,"£199.00",08/10/2026`,
+    `"Test Patient","1","","test@example.com", +44-7700900111,24/09/2026,"STAG","Dr. Sam Patel",,"Crown-P","Crown - Porcelain","UL1","","Proposed","Unscheduled",,"£1,000.00",08/10/2026`,
+    `"Test Patient","1","","test@example.com", +44-7700900111,24/09/2026,"STAG","Dr. Sam Patel",,"Crown-P","Crown - Porcelain","UR1","","Proposed","Unscheduled",,"£1,000.00",08/10/2026`,
+    `"Other Patient","2","","", +44-7700900222,12/05/2026,"STAG","Dr. Sam Patel",,"2706","Fit Denture","","","Proposed","Unscheduled",,"£1,000.00",01/10/2026`,
+    `"Other Patient","2","","", +44-7700900222,12/05/2026,"STAG","Dr. Sam Patel",,"2706","Fit Denture","","","Proposed","Unscheduled",,"£1,000.00",01/10/2026`,
+  ].join("\n");
+
+  test("repeated items on one visit are counted and their fees added", () => {
+    const { fileErrors, rows } = parseImport(csv, "2026-10-19");
+    expect(fileErrors).toEqual([]);
+    expect(rows.map((r) => [r.treatmentType, r.valuePence, r.phone, r.dentistName, r.errors])).toEqual([
+      ["Composite Filling + Crown - Porcelain ×2", 219900, "+447700900111", "Dr. Sam Patel", []],
+      ["Fit Denture ×2", 200000, "+447700900222", "Dr. Sam Patel", []],
+    ]);
+  });
+});
