@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline — TreatmentTrack</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #fbf9f3;
+        color: #211e16;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        text-align: center;
+        padding: 24px;
+      }
+      .mark {
+        width: 44px;
+        height: 44px;
+        border: 3px solid #12382e;
+        border-radius: 10px;
+        display: inline-grid;
+        grid-template-columns: 8px 8px;
+        gap: 4px;
+        align-items: end;
+        justify-content: center;
+        padding: 6px 0;
+        box-sizing: border-box;
+      }
+      .mark i { background: #12382e; border-radius: 2px; display: block; }
+      .mark i:first-child { height: 22px; }
+      .mark i:last-child { height: 13px; }
+      h1 { font-size: 22px; margin: 18px 0 8px; }
+      p { color: #6e6755; font-size: 15px; line-height: 1.5; max-width: 38ch; margin: 0 auto; }
+      button {
+        margin-top: 20px;
+        background: #12382e;
+        color: #fff;
+        border: 0;
+        border-radius: 10px;
+        padding: 12px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="mark" aria-hidden="true"><i></i><i></i></span>
+      <h1>You&rsquo;re offline</h1>
+      <p>TreatmentTrack needs a connection to show live patient and quote data. Check your internet and try again.</p>
+      <button onclick="location.reload()">Try again</button>
+    </main>
+  </body>
+</html>

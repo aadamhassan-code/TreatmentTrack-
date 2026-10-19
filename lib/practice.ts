@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { needsSecondFactor } from "@/lib/mfa";
 import type { Plan, BillingInterval } from "@/lib/types";
 
 /** owner: everything. staff: all day-to-day work. dentist: only their own quotes. */
@@ -48,6 +49,8 @@ export const requireCurrentPractice = cache(async (): Promise<{
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  // Two-factor sign-in is on for this login but no code entered yet.
+  if (await needsSecondFactor(supabase)) redirect("/login?step=verify");
 
   const { data: practiceId } = await supabase.rpc("current_practice_id");
   if (!practiceId) redirect("/login");

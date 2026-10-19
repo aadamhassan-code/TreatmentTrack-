@@ -20,8 +20,15 @@ const SUPABASE_STUB = `
   create function auth.uid() returns uuid language sql stable as $$
     select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
   $$;
+  -- Supabase's JWT claims helper and MFA factors table, for the two-factor policies.
+  create function auth.jwt() returns jsonb language sql stable as $$
+    select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb
+  $$;
+  create table auth.mfa_factors (id uuid primary key, user_id uuid not null, status text not null);
   grant usage on schema auth to anon, authenticated, service_role;
   grant execute on function auth.uid() to anon, authenticated, service_role;
+  grant execute on function auth.jwt() to anon, authenticated, service_role;
+  grant select on auth.mfa_factors to authenticated, service_role;
 `;
 
 // Like Supabase, every new table in public is granted to the API roles by

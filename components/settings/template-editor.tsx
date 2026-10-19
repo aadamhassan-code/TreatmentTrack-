@@ -68,21 +68,27 @@ export function TemplateEditor({
             {v}
           </code>
         ))}
-        — an opt-out is added automatically to any message that doesn&rsquo;t
+        An opt-out is added automatically to any message that doesn&rsquo;t
         already include one. Empty a box and save to stop sending that message.
+      </p>
+      <p className="rounded-lg border border-gold-500/40 bg-gold-100 px-4 py-3 text-sm text-ink-900">
+        <strong>Privacy tip:</strong> texts show on lock screens and shared phones. Naming the treatment (with{" "}
+        <code className="rounded bg-ink-900/5 px-1 font-mono text-xs">{"{treatmentType}"}</code>) next to the
+        patient&rsquo;s name shares health information, so the default wording just says &ldquo;the treatment we
+        discussed&rdquo;.
       </p>
 
       {STEPS.map(({ value: step, label }) => (
         <Card key={step}>
           <CardBody className="space-y-4">
-            <p className="font-display text-lg font-medium text-teal-900">
+            <p className="font-display text-lg text-teal-900">
               {label}
             </p>
             {CHANNELS.map(({ value: channel, label: channelLabel }) => {
               const key = `${step}:${channel}`;
               return (
                 <div key={key}>
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-ink-500">
+                  <label className="block text-[13px] font-medium text-ink-500">
                     {channelLabel}
                   </label>
                   <textarea
@@ -93,6 +99,11 @@ export function TemplateEditor({
                     placeholder={`No ${channelLabel} template yet — add one to enable this channel for this step.`}
                     className="mt-1 w-full rounded-lg border border-ink-900/15 bg-cream-0 px-3.5 py-2.5 text-sm focus:border-teal-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
                   />
+                  {channel !== "email" && (bodies.get(key) ?? "").includes("{treatmentType}") && (
+                    <p className="mt-1 text-[13px] text-gold-700">
+                      This message names the treatment, which anyone glancing at the patient&rsquo;s phone could see.
+                    </p>
+                  )}
                 </div>
               );
             })}

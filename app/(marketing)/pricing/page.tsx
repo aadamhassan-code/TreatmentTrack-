@@ -27,7 +27,7 @@ export default function PricingPage() {
       </div>
 
       <div className="mx-auto mt-20 max-w-2xl">
-        <h2 className="font-display text-2xl font-medium text-ink-900">
+        <h2 className="font-display text-2xl text-ink-900">
           Questions practices actually ask
         </h2>
         <dl className="mt-6 space-y-6">

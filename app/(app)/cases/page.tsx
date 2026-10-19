@@ -78,7 +78,7 @@ export default async function CasesPage({
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-medium text-ink-900">{isDentist ? "My cases" : "Cases"}</h1>
+          <h1 className="font-display text-3xl text-ink-900">{isDentist ? "My cases" : "Cases"}</h1>
           <p className="mt-1 text-sm text-ink-500">
             Where each booked patient is in their treatment.
             {!isDentist && filter && filter !== userId && (

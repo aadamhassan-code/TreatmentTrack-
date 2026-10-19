@@ -166,3 +166,20 @@ describe("CareStack UK export (real column layout, made-up patients)", () => {
     ]);
   });
 });
+
+describe("header aliases from other practice software", () => {
+  test("recognises common headings from Aerona/iSmile/Pearl-style exports", () => {
+    const csv =
+      "Patient's Name,Mobile No,Treatment Description,Estimate,Date of Quote\n" +
+      "Asha Patel,07700 900900,Composite bonding,£850,01/10/2026\n";
+    const { fileErrors, rows } = parseImport(csv, "2026-10-18");
+    expect(fileErrors).toEqual([]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].errors).toEqual([]);
+    expect(rows[0].patientName).toBe("Asha Patel");
+    expect(rows[0].phone).toBe("+447700900900");
+    expect(rows[0].treatmentType).toBe("Composite bonding");
+    expect(rows[0].valuePence).toBe(85000);
+    expect(rows[0].quotedOn).toBe("2026-10-01");
+  });
+});

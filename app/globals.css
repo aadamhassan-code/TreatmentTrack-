@@ -1,63 +1,64 @@
 @import "tailwindcss";
 
 /*
- * Clean, paper-white system: black ink, quiet greys, and soft pastel
- * labels for stages and statuses. The colour names are kept from the
- * original palette so every screen picks the new look up at once:
- * "teal" is now the ink/neutral scale, "cream" is paper, "gold" is the
- * butter highlight and "clay" is the overdue/lost red.
+ * TreatmentTrack's own identity: a practice ledger, not a notes app.
+ * Deep "ledger green" for actions and the brand, warm paper backgrounds,
+ * gilt for money and attention, and a characterful serif for headlines.
+ * The colour names are kept from the original palette so every screen
+ * picks the look up at once: "teal" is the ledger-green brand scale,
+ * "cream" is warm paper, "gold" is gilt and "clay" is the overdue/lost red.
  */
 @theme {
-  /* Ink — primary brand colour (buttons, active states) */
-  --color-teal-950: #111110;
-  --color-teal-900: #191919;
-  --color-teal-800: #2f2f2d;
-  --color-teal-700: #37352f;
-  --color-teal-600: #55534e;
-  --color-teal-500: #6f6e69;
-  --color-teal-400: #91908b;
-  --color-teal-300: #b4b3ae;
-  --color-teal-200: #d3d2ce;
-  --color-teal-100: #ededeb;
-  --color-teal-50: #f7f7f5;
+  /* Ledger green — primary brand colour (buttons, active states) */
+  --color-teal-950: #0a241d;
+  --color-teal-900: #12382e;
+  --color-teal-800: #174939;
+  --color-teal-700: #1d5c47;
+  --color-teal-600: #2a7258;
+  --color-teal-500: #3c8a6b;
+  --color-teal-400: #62a687;
+  --color-teal-300: #94c4ab;
+  --color-teal-200: #c4ded0;
+  --color-teal-100: #e2efe6;
+  --color-teal-50: #f1f8f2;
 
-  /* Butter — highlight, used sparingly for money/attention */
-  --color-gold-700: #7a5a12;
-  --color-gold-600: #a37a1c;
-  --color-gold-500: #e3a83a;
-  --color-gold-400: #efc163;
-  --color-gold-300: #f6d796;
-  --color-gold-200: #fdecc8;
-  --color-gold-100: #fef6e4;
+  /* Gilt — money figures and attention, used sparingly */
+  --color-gold-700: #7c5a10;
+  --color-gold-600: #a0761a;
+  --color-gold-500: #c9962b;
+  --color-gold-400: #dcb158;
+  --color-gold-300: #eccf8e;
+  --color-gold-200: #f7e7c2;
+  --color-gold-100: #fbf3dd;
 
-  /* Paper — backgrounds */
-  --color-cream-200: #ededeb;
-  --color-cream-100: #f7f7f5;
-  --color-cream-50: #ffffff;
+  /* Paper — warm backgrounds */
+  --color-cream-200: #ece6d6;
+  --color-cream-100: #f5f1e6;
+  --color-cream-50: #fbf9f3;
   --color-cream-0: #ffffff;
 
   /* Red — overdue, lost, errors */
-  --color-clay-700: #9f2f2a;
-  --color-clay-600: #c4403a;
-  --color-clay-500: #e16f64;
-  --color-clay-100: #ffe2dd;
+  --color-clay-700: #93362a;
+  --color-clay-600: #b44535;
+  --color-clay-500: #d4705d;
+  --color-clay-100: #f8e1da;
 
-  /* Text */
-  --color-ink-900: #191919;
-  --color-ink-700: #37352f;
-  --color-ink-500: #787774;
-  --color-ink-300: #acaba7;
+  /* Text — warm near-black ink */
+  --color-ink-900: #211e16;
+  --color-ink-700: #423d30;
+  --color-ink-500: #6e6755;
+  --color-ink-300: #a89f8b;
 
-  /* Pastel labels (stages, statuses) */
-  --color-lilac: #e8deee;
-  --color-sky: #d3e5ef;
-  --color-sage: #dbeddb;
-  --color-butter: #fdecc8;
-  --color-rose: #ffe2dd;
+  /* Soft labels (stages, statuses) — tinted to sit on warm paper */
+  --color-lilac: #e9e0ef;
+  --color-sky: #d8e7ee;
+  --color-sage: #dcebdb;
+  --color-butter: #f7e7c2;
+  --color-rose: #f8e0d8;
 
-  --font-display: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-young-serif), ui-serif, Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 }
 
 html {
@@ -69,16 +70,52 @@ body {
   color: var(--color-ink-900);
 }
 
-/* Headings: heavy and tightly set. Unlayered, so it wins over the
-   font-medium utility many headings carry. */
+/* Headings: Young Serif only ships one weight, so the serif itself does
+   the work. Unlayered, so it wins over the font-medium/font-bold
+   utilities many headings carry. */
 .font-display {
-  font-weight: 650;
-  letter-spacing: -0.035em;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 /* Money figures sit on a quiet wash rather than ruled lines. */
 .ledger-lines {
   background: var(--color-cream-0);
+}
+
+/* The homepage's one orchestrated moment: the follow-up track draws
+   itself, and each stop arrives in turn. */
+@keyframes track-draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes track-draw-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes stop-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.track-line-x {
+  transform-origin: left center;
+  animation: track-draw 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.2s both;
+}
+.track-line-y {
+  transform-origin: center top;
+  animation: track-draw-y 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.2s both;
+}
+.track-stop {
+  animation: stop-in 0.5s ease-out both;
+  animation-delay: calc(var(--i, 0) * 0.36s + 0.25s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track-line-x,
+  .track-line-y,
+  .track-stop {
+    animation: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

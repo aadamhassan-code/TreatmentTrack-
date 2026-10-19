@@ -162,9 +162,9 @@ export function BoardDemo() {
         style={cursor.pct ? { left: `${cursor.x}%`, top: `${cursor.y}%` } : { left: cursor.x, top: cursor.y }}
       >
         <svg width="18" height="22" viewBox="0 0 18 22">
-          <path d="M1 1l15 11-6.5 1.2L13 21l-3 1-3.5-7.8L1 18z" fill="#191919" stroke="#fff" strokeWidth="1.4" />
+          <path d="M1 1l15 11-6.5 1.2L13 21l-3 1-3.5-7.8L1 18z" fill="#12382e" stroke="#fff" strokeWidth="1.4" />
         </svg>
-        <span className="absolute left-4 top-[18px] whitespace-nowrap rounded-[5px] bg-[#2383E2] px-1.5 py-0.5 text-[11px] font-semibold text-white">
+        <span className="absolute left-4 top-[18px] whitespace-nowrap rounded-[5px] bg-[#1d5c47] px-1.5 py-0.5 text-[11px] font-semibold text-white">
           Sam · TCO
         </span>
       </div>

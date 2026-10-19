@@ -13,7 +13,7 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     testTimeout: 30000,
     // Each DB test file boots its own in-memory Postgres; give that room when
-    // several start at once on a slow machine.
-    hookTimeout: 60000,
+    // several start at once on a slow machine or busy CI runner.
+    hookTimeout: 180000,
   },
 });

@@ -26,12 +26,12 @@ type Field =
 // Includes the column names in CareStack's Treatment Tracker report, so its
 // download can be imported as it is.
 const HEADER_ALIASES: Record<Field, string[]> = {
-  patientName: ["patientname", "name", "patient", "fullname", "patientfullname"],
-  phone: ["phone", "mobile", "mobilenumber", "phonenumber", "telephone", "tel", "mobilephone"],
+  patientName: ["patientname", "name", "patient", "fullname", "patientfullname", "patientsname"],
+  phone: ["phone", "mobile", "mobilenumber", "phonenumber", "telephone", "tel", "mobilephone", "mobileno", "patientmobile", "contactnumber"],
   email: ["email", "emailaddress", "patientemail"],
-  treatmentType: ["treatmenttype", "treatment", "treatmentplan", "procedure", "item", "codedescription", "description"],
-  value: ["value", "quotedvalue", "quotevalue", "amount", "price", "fee", "total", "cost", "estfee", "estimatedfee"],
-  quoteDate: ["quotedate", "quotedon", "date", "datequoted", "plandate", "proposeddate"],
+  treatmentType: ["treatmenttype", "treatment", "treatmentplan", "procedure", "item", "codedescription", "description", "treatmentdescription", "plandescription"],
+  value: ["value", "quotedvalue", "quotevalue", "amount", "price", "fee", "total", "cost", "estfee", "estimatedfee", "estimate", "quotedfee", "treatmentcost", "planvalue"],
+  quoteDate: ["quotedate", "quotedon", "date", "datequoted", "plandate", "proposeddate", "estimatedate", "dateofquote"],
   optOutOffered: ["optoutoffered", "optout", "consent", "softoptin"],
   dentist: ["dentist", "clinician", "practitioner", "treatingdentist", "provider", "txprovider", "treatmentprovider", "txclinician", "treatmentclinician"],
   scheduledStatus: ["scheduledstatus"],

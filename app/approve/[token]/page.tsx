@@ -40,7 +40,7 @@ export default async function ApprovePage({ params }: { params: Promise<{ token:
   return (
     <main className="min-h-screen bg-cream-50 px-4 py-12">
       <div className="mx-auto max-w-2xl space-y-6">
-        <p className="font-display text-lg font-medium text-teal-900">TreatmentTrack</p>
+        <p className="font-display text-lg text-teal-900">TreatmentTrack</p>
         {!practice || practice.owner_approved_at ? (
           <div className="rounded-xl border border-ink-900/8 bg-cream-0 p-6 text-sm text-ink-700">
             This approval link has expired or was already used. If you still need to approve, ask the dentist to send
@@ -49,7 +49,7 @@ export default async function ApprovePage({ params }: { params: Promise<{ token:
         ) : (
           <div className="space-y-6 rounded-xl border border-ink-900/8 bg-cream-0 p-6">
             <div>
-              <h1 className="font-display text-2xl font-medium text-ink-900">
+              <h1 className="font-display text-2xl text-ink-900">
                 Approve follow-up messages for {practice.name}
               </h1>
               <p className="mt-2 text-sm text-ink-700">

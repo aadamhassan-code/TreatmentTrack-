@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { InviteForm, MemberActions, MemberDetails, AddLocationForm } from "@/components/team/team-forms";
 import { decryptSecret } from "@/lib/crypto";
 import { createDentallyClient, type DentallyRegion } from "@/lib/integrations/dentally";
+import { PercentField } from "@/components/settings/percent-field";
+import { setDentistShare } from "@/lib/actions/margins";
 
 const PLAN_LABELS: Record<string, string> = {
   solo: "Solo",
@@ -66,6 +68,9 @@ export default async function TeamPage() {
     }
   }
 
+  const { data: rates } = await admin.from("dentist_pay_rates").select("user_id, share_pct").eq("practice_id", practice.id);
+  const shareOf = new Map((rates ?? []).map((r) => [r.user_id as string, Number(r.share_pct)]));
+
   const plan = locations?.find((l) => l.id === rootId)?.plan ?? practice.plan;
   const limit = plan === "multisite" ? 5 : plan === "enterprise" ? null : 1;
   const locationCount = locations?.length ?? 1;
@@ -74,13 +79,13 @@ export default async function TeamPage() {
   return (
     <div className="max-w-3xl space-y-10">
       <div>
-        <h1 className="font-display text-3xl font-medium text-ink-900">Team & locations</h1>
+        <h1 className="font-display text-3xl text-ink-900">Team & locations</h1>
         <p className="mt-1 text-sm text-ink-500">{practice.name}</p>
       </div>
 
       <section className="space-y-3">
         <div>
-          <h2 className="font-display text-xl font-medium text-ink-900">Team</h2>
+          <h2 className="font-display text-xl text-ink-900">Team</h2>
           <p className="mt-1 text-sm text-ink-500">
             <strong>Owners</strong> can do everything, including Settings, message templates, this page and
             adding locations. <strong>Staff</strong> can use the dashboard, add and import quotes, log
@@ -95,7 +100,7 @@ export default async function TeamPage() {
               <div key={m.id} className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
                 <div>
                   <p className="text-sm font-medium text-ink-900">
-                    {m.display_name ? `${m.display_name} · ` : ""}
+                    {m.display_name ? `${m.display_name}, ` : ""}
                     {m.email}
                     {m.user_id === userId && <span className="ml-2 text-xs font-normal text-ink-500">(you)</span>}
                   </p>
@@ -108,6 +113,17 @@ export default async function TeamPage() {
                     dentallyPractitionerId={m.dentally_practitioner_id}
                     practitioners={practitioners}
                   />
+                  {(m.role === "dentist" || m.treats_patients) && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-ink-500">
+                      <span>Share of fees</span>
+                      <PercentField
+                        label={`Share of fees for ${m.display_name ?? m.email}`}
+                        initial={shareOf.get(m.user_id) ?? null}
+                        onSave={setDentistShare.bind(null, m.user_id)}
+                        hint="For margin estimates. Only owners see this."
+                      />
+                    </div>
+                  )}
                 </div>
                 <MemberActions
                   memberId={m.id}
@@ -127,7 +143,7 @@ export default async function TeamPage() {
 
       <section className="space-y-3">
         <div>
-          <h2 className="font-display text-xl font-medium text-ink-900">Locations</h2>
+          <h2 className="font-display text-xl text-ink-900">Locations</h2>
           <p className="mt-1 text-sm text-ink-500">
             Your {PLAN_LABELS[plan ?? ""] ?? ""} plan covers{" "}
             {limit == null ? "as many locations as you need" : limit === 1 ? "one location" : `up to ${limit} locations`}.

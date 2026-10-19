@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireOwner } from "@/lib/practice";
 import type { Channel, SequenceStep } from "@/lib/types";
 import { scheduleProblem } from "@/lib/schedule";
+import { RETENTION_CHOICES } from "@/lib/retention";
 
 export async function updateChannelSettings(formData: FormData) {
   const { practice } = await requireOwner();
@@ -76,6 +77,26 @@ export async function updateSequenceDays(days: number[]): Promise<{ error?: stri
     .eq("practice_id", practice.id);
   if (error) return { error: "Couldn't save the schedule. Please try again." };
 
+  revalidatePath("/settings");
+  return {};
+}
+
+
+/**
+ * Owner sets how long inactive patients are kept before automatic erasure
+ * (UK GDPR storage limitation). The database also enforces 6–120 months.
+ */
+export async function updateRetentionMonths(months: number): Promise<{ error?: string }> {
+  const { practice } = await requireOwner();
+  if (!(RETENTION_CHOICES as readonly number[]).includes(months)) {
+    return { error: "Choose one of the retention periods offered." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("settings")
+    .update({ retention_months: months, updated_at: new Date().toISOString() })
+    .eq("practice_id", practice.id);
+  if (error) return { error: "Couldn't save the retention period. Please try again." };
   revalidatePath("/settings");
   return {};
 }

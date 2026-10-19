@@ -2,7 +2,7 @@ import { Logo } from "@/components/marketing/nav";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-full flex-col bg-teal-50">
+    <div className="flex flex-1 flex-col bg-teal-50">
       <header className="px-6 py-6">
         <Logo />
       </header>

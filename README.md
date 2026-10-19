@@ -19,9 +19,10 @@ Tailwind CSS · deployed to Vercel.
    values — everything else (Stripe, Twilio, WhatsApp, email) can be left
    blank and the app will show "not connected yet" states rather than
    crashing.
-3. Create a Supabase project and run the migration in
-   `supabase/migrations/0001_init.sql` against it (via the Supabase SQL
-   editor, or `supabase db push` if you're using the CLI).
+3. Create a Supabase project and run **every** migration in
+   `supabase/migrations/` against it **in filename order** (0001 → 0009),
+   via the Supabase SQL editor, or `supabase db push` if you're using the
+   CLI.
 4. `npm run dev` and visit `http://localhost:3000`.
 
 ## Testing without Stripe
@@ -138,8 +139,15 @@ transaction (`record_patient_opt_out`).
   written against Dentally's v1 API and tested against a mock; once approved,
   the client in `lib/integrations/dentally.ts` needs moving to NexGen's
   endpoints and OAuth2 before going live.
-- **Software of Excellence (Exact/R4)** has no open API — practices export
-  outstanding treatment plans to CSV and use Import CSV.
+- **Software of Excellence (Exact) and Carestream (R4)** have no open
+  API — practices export outstanding treatment plans to CSV and use
+  Import CSV.
+- **CareStack**'s Treatment Tracker report imports as downloaded (its
+  column names are recognised); a live API connection would go through
+  CareStack's partner programme.
+- Other systems (Sensei Cloud, Aerona, iSmile, Pearl…) also have no open
+  self-service APIs — Import CSV recognises their common column headings,
+  and the import page tells practices what to export.
 
 ## Data location
 
@@ -147,3 +155,79 @@ The Supabase project is in London, and `vercel.json` pins the app's server
 code to Vercel's London region (`lhr1`), so patient data is stored and
 processed in the UK. Twilio (SMS) and Resend (email) are sub-processors that
 handle the message content they send.
+
+## Back office
+
+`/admin` is a read-only overview for the TreatmentTrack team (not practice
+staff): every practice with plan/status and per-practice value, platform
+totals, failed messages, sync problems, and callback leads. Access is
+controlled by `PLATFORM_ADMIN_EMAILS` (comma-separated sign-in emails);
+unset means closed to everyone.
+
+## PWA
+
+The app is installable (manifest + icons + a conservative service worker:
+network-first pages with an offline fallback, cached hashed assets only —
+patient data is never cached). The service worker registers in production
+builds only.
+
+## CI
+
+`.github/workflows/ci.yml` runs lint, the full test suite and a
+production build on every PR and push to main. Turn on branch protection
+for `main` requiring the `checks` job, so nothing broken can merge.
+
+## Legal pages
+
+`/privacy`, `/terms` and `/dpa` describe the controller/processor model,
+consent/opt-out handling, UK data residency and sub-processors, matching
+how the code behaves. Before onboarding a real practice: add the company's
+registered name/number and ICO registration to these pages and have them
+reviewed — they are a faithful starting point, not legal advice.
+
+## Go-live
+
+See `docs/GO-LIVE.md` for the exact environment variables and steps to
+take a practice live (including connecting Dentally with a
+practice-generated API token).
+
+## Patients, dentists, margins
+
+- **Patients** (`/patients`): searchable list with a dentist filter; each
+  patient's page shows their quotes, every message, and their consent
+  history, with **Export** (JSON, for subject access requests) and
+  **Erase** (right to erasure) for owners and staff.
+- **Dentists** (`/dentists`, owners and staff): quoted, booking rate,
+  revenue booked, average days to book, open pipeline and cases in
+  treatment per dentist, for any period. Each links to Reports filtered
+  to that dentist.
+- **Reports**: dentist filter, 12-month booked-revenue chart, and (owners
+  only) estimated margin by kind of treatment.
+- **Margins** are estimates: fee − lab & materials % (per Cases board,
+  Settings → Costs & margins) − the dentist's share of the rest (Team
+  page). Shares live in `dentist_pay_rates`, owner-only; a dentist can see
+  only their own.
+
+## UK GDPR features (migration 0008)
+
+- `erase_patient()` removes a patient's details, quotes, messages and
+  cases, keeping a salted-hash do-not-contact marker so they can't be
+  silently re-imported, plus bare consent rows as evidence.
+- Retention: `/api/cron/retention` (03:15 daily) erases patients with
+  nothing open after the practice's period (default 24 months).
+- `audit_events`: exports, erasures, retention and two-factor changes,
+  readable by owners in Settings → Privacy & security.
+- Two-factor sign-in (TOTP) per user, enforced in the database: once a
+  user has a verified authenticator, a password-only session can't read
+  patient data (restrictive RLS via `mfa_satisfied()`).
+- `purge_practice()` (service role) for confirmed account closures.
+- New practices' default texts don't name the treatment.
+
+The app tolerates 0008/0009 not having been run yet (new features stay
+dormant; see `lib/supabase/compat.ts`), but run them promptly.
+
+## Help & support
+
+`/help` in the app: quick answers plus a message form. Requests land in
+`callback_requests` with `topic = 'support'` and show in the `/admin`
+back office alongside sales leads and walkthrough requests.
