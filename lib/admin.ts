@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { needsSecondFactor } from "@/lib/mfa";
 
 /**
  * Platform staff (the TreatmentTrack team), not practice staff. Set
@@ -45,5 +46,6 @@ export async function requirePlatformAdmin(): Promise<{ email: string }> {
   if (!user || !isPlatformAdminEmail(user.email, allowlist)) {
     redirect("/dashboard");
   }
+  if (await needsSecondFactor(supabase)) redirect("/login?step=verify");
   return { email: user.email! };
 }

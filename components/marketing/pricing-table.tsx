@@ -110,7 +110,7 @@ export function PricingTable() {
                   Most practices choose this
                 </p>
               )}
-              <h3 className="font-display text-2xl font-medium text-ink-900">
+              <h3 className="font-display text-2xl text-ink-900">
                 {plan.name}
               </h3>
               <p className="mt-1 text-sm text-ink-500">{plan.description}</p>
@@ -154,7 +154,7 @@ export function PricingTable() {
         <Card className="border-dashed">
           <CardBody className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
             <div>
-              <h3 className="font-display text-xl font-medium text-ink-900">
+              <h3 className="font-display text-xl text-ink-900">
                 Running more than 5 practices?
               </h3>
               <p className="mt-1 text-sm text-ink-500">

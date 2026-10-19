@@ -63,18 +63,25 @@ export default function PrivacyPage() {
       <Section title="Where data lives">
         <p>
           The database is hosted with Supabase in London, and the application&rsquo;s server code
-          runs in Vercel&rsquo;s London region, so patient data is stored and processed in the UK.
-          Messages are delivered by sub-processors: Twilio (SMS and WhatsApp) and Resend (email),
-          which handle the content of the messages they send.
+          runs in Vercel&rsquo;s London region, so patient records are stored in the UK. Messages
+          are delivered by two US-based sub-processors, Twilio (SMS and WhatsApp) and Resend
+          (email), which handle the content of the messages they send. Both are certified under
+          the UK Extension to the EU-US Data Privacy Framework (the UK-US &ldquo;data
+          bridge&rdquo;), which is the safeguard for those transfers.
         </p>
       </Section>
 
       <Section title="Retention and deletion">
         <p>
-          Data is retained while the practice holds an account, because consent and opt-out history
-          must stay provable. When a practice closes its account, or asks us to delete a patient
-          record, the data is deleted. Patients should direct access or deletion requests to their
-          practice, which controls the data; we support the practice in meeting them.
+          A patient&rsquo;s details are kept while they have a quote being followed up or treatment
+          in progress, and then for the practice&rsquo;s retention period (two years of inactivity
+          unless the practice sets otherwise), after which they are erased automatically. A practice
+          can also erase a patient at any time, or export everything held about them. After
+          erasure, only a coded do-not-contact marker and the bare consent record remain, so an
+          opted-out or erased person is never messaged again and past messages stay provably
+          lawful. When a practice closes its account, its data is deleted. Patients should direct
+          access or deletion requests to their practice, which controls the data; we support the
+          practice in meeting them.
         </p>
       </Section>
 

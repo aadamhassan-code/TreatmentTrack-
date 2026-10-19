@@ -49,7 +49,7 @@ export function ImportTreatmentsForm() {
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-medium text-ink-900">Import quotes from a spreadsheet</h1>
+        <h1 className="font-display text-3xl text-ink-900">Import quotes from a spreadsheet</h1>
         <p className="mt-2 text-sm text-ink-500">
           Upload a CSV of declined quotes — for example an export from your practice
           management software — and TreatmentTrack will start following each one up.
@@ -144,7 +144,7 @@ export function ImportTreatmentsForm() {
                 <div className="max-h-96 overflow-auto rounded-lg border border-ink-900/8">
                   <table className="w-full min-w-[720px] border-collapse text-left text-sm">
                     <thead className="sticky top-0 bg-cream-50">
-                      <tr className="border-b border-ink-900/8 text-xs uppercase tracking-wide text-ink-500">
+                      <tr className="border-b border-ink-900/8 text-[13px] text-ink-500">
                         <th className="px-3 py-2 font-medium">Row</th>
                         <th className="px-3 py-2 font-medium">Patient</th>
                         <th className="px-3 py-2 font-medium">Phone</th>
@@ -247,7 +247,7 @@ function PmsExportHelp() {
           <li>
             That&rsquo;s your list of patients quoted for private treatment who haven&rsquo;t started. This report
             can&rsquo;t be downloaded and doesn&rsquo;t show mobile numbers, so add each patient who was offered an
-            opt-out with <strong>Add treatment</strong> (click their name in Dentally to see their mobile), or type
+            opt-out with <strong>Add a quote</strong> (click their name in Dentally to see their mobile), or type
             them into the template above and import it.
           </li>
         </ol>

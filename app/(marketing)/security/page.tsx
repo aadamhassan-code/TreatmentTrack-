@@ -39,8 +39,8 @@ const COMPARISON = [
 
 const PROTECTION = [
   {
-    title: "Held in London",
-    body: "The database is hosted by Supabase in London and the app runs from Vercel’s London region. Texts go via Twilio and emails via Resend.",
+    title: "Records stored in London",
+    body: "The database is hosted by Supabase in London and the app runs from Vercel’s London region. Texts go via Twilio and emails via Resend, both US companies certified under the UK-US data bridge.",
   },
   {
     title: "Each practice walled off",

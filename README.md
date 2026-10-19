@@ -20,7 +20,7 @@ Tailwind CSS · deployed to Vercel.
    blank and the app will show "not connected yet" states rather than
    crashing.
 3. Create a Supabase project and run **every** migration in
-   `supabase/migrations/` against it **in filename order** (0001 → 0007),
+   `supabase/migrations/` against it **in filename order** (0001 → 0009),
    via the Supabase SQL editor, or `supabase db push` if you're using the
    CLI.
 4. `npm run dev` and visit `http://localhost:3000`.
@@ -190,3 +190,44 @@ reviewed — they are a faithful starting point, not legal advice.
 See `docs/GO-LIVE.md` for the exact environment variables and steps to
 take a practice live (including connecting Dentally with a
 practice-generated API token).
+
+## Patients, dentists, margins
+
+- **Patients** (`/patients`): searchable list with a dentist filter; each
+  patient's page shows their quotes, every message, and their consent
+  history, with **Export** (JSON, for subject access requests) and
+  **Erase** (right to erasure) for owners and staff.
+- **Dentists** (`/dentists`, owners and staff): quoted, booking rate,
+  revenue booked, average days to book, open pipeline and cases in
+  treatment per dentist, for any period. Each links to Reports filtered
+  to that dentist.
+- **Reports**: dentist filter, 12-month booked-revenue chart, and (owners
+  only) estimated margin by kind of treatment.
+- **Margins** are estimates: fee − lab & materials % (per Cases board,
+  Settings → Costs & margins) − the dentist's share of the rest (Team
+  page). Shares live in `dentist_pay_rates`, owner-only; a dentist can see
+  only their own.
+
+## UK GDPR features (migration 0008)
+
+- `erase_patient()` removes a patient's details, quotes, messages and
+  cases, keeping a salted-hash do-not-contact marker so they can't be
+  silently re-imported, plus bare consent rows as evidence.
+- Retention: `/api/cron/retention` (03:15 daily) erases patients with
+  nothing open after the practice's period (default 24 months).
+- `audit_events`: exports, erasures, retention and two-factor changes,
+  readable by owners in Settings → Privacy & security.
+- Two-factor sign-in (TOTP) per user, enforced in the database: once a
+  user has a verified authenticator, a password-only session can't read
+  patient data (restrictive RLS via `mfa_satisfied()`).
+- `purge_practice()` (service role) for confirmed account closures.
+- New practices' default texts don't name the treatment.
+
+The app tolerates 0008/0009 not having been run yet (new features stay
+dormant; see `lib/supabase/compat.ts`), but run them promptly.
+
+## Help & support
+
+`/help` in the app: quick answers plus a message form. Requests land in
+`callback_requests` with `topic = 'support'` and show in the `/admin`
+back office alongside sales leads and walkthrough requests.

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { isMissingSchema } from "@/lib/supabase/compat";
 
 export interface RequestCallbackResult {
   error?: string;
@@ -37,13 +38,17 @@ export async function requestCallback(formData: FormData): Promise<RequestCallba
 
   const practiceCount = practiceCountRaw ? Number(practiceCountRaw) : null;
 
-  const { error } = await supabase.from("callback_requests").insert({
+  const row = {
     name,
     email,
     phone: phone || null,
     practice_count: Number.isFinite(practiceCount) ? practiceCount : null,
     message: message || null,
-  });
+  };
+  const topic = String(formData.get("topic") ?? "") === "walkthrough" ? "walkthrough" : "sales";
+  let { error } = await supabase.from("callback_requests").insert({ ...row, topic });
+  // Before migration 0009 there's no topic column: save without it.
+  if (isMissingSchema(error)) ({ error } = await supabase.from("callback_requests").insert(row));
 
   if (error) {
     return { error: "Couldn't send your request. Please try again or email us directly." };

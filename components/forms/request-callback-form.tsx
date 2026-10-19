@@ -9,7 +9,7 @@ import {
   type RequestCallbackResult,
 } from "@/lib/actions/callback-requests";
 
-export function RequestCallbackForm() {
+export function RequestCallbackForm({ topic = "sales" }: { topic?: "sales" | "walkthrough" } = {}) {
   const [state, formAction, pending] = useActionState<RequestCallbackResult, FormData>(
     async (_prev, formData) => requestCallback(formData),
     {}
@@ -44,6 +44,7 @@ export function RequestCallbackForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Honeypot for bots — hidden from people and screen readers. */}
+      <input type="hidden" name="topic" value={topic} />
       <input
         type="text"
         name="website"

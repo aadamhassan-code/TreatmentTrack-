@@ -64,7 +64,7 @@ export function LogVisitForm() {
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-medium text-ink-900">Log a visit</h1>
+        <h1 className="font-display text-3xl text-ink-900">Log a visit</h1>
         <p className="mt-2 text-sm text-ink-500">
           Hygiene and extraction visits can surface a further-treatment
           suggestion (whitening, implant) — but only if this patient has

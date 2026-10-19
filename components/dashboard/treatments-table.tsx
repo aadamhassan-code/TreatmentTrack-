@@ -1,6 +1,8 @@
 "use client";
 
 import { Fragment, useState, useTransition } from "react";
+import Link from "next/link";
+import { ActionsMenu } from "@/components/ui/menu";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { daysSince, formatDate, formatGBP, ukDate } from "@/lib/utils";
@@ -12,16 +14,6 @@ import {
   setTreatmentOutcome,
 } from "@/lib/actions/treatments";
 import type { Treatment, TreatmentOutcome } from "@/lib/types";
-
-const OUTCOME_BUTTONS: {
-  outcome: TreatmentOutcome;
-  label: string;
-  variant: "secondary" | "ghost";
-}[] = [
-  { outcome: "converted", label: "Booked", variant: "secondary" },
-  { outcome: "declined", label: "Declined", variant: "ghost" },
-  { outcome: "lost", label: "Lost", variant: "ghost" },
-];
 
 function closedOn(t: Treatment): string | null {
   const at =
@@ -75,27 +67,24 @@ export function TreatmentsTable({
     });
   }
 
+  // In-page confirmation for actions that restart messages (no browser pop-ups).
+  const [confirming, setConfirming] = useState<{ id: string; kind: "resume" | "reopen" } | null>(null);
+
   function resume(id: string) {
-    if (!confirm("Restart follow-up now? The first message goes today."))
-      return;
     setError(null);
     startTransition(async () => {
       const res = await resumeTreatment(id);
       if (res.error) setError(res.error);
+      else setConfirming(null);
     });
   }
 
   function reopen(id: string) {
-    if (
-      !confirm(
-        "Reopen this quote? It goes back on the open list and its remaining follow-up messages restart (the next one tomorrow at the earliest).",
-      )
-    )
-      return;
     setError(null);
     startTransition(async () => {
       try {
         await reopenTreatment(id);
+        setConfirming(null);
       } catch {
         setError("Couldn't reopen that quote. Please try again.");
       }
@@ -105,10 +94,11 @@ export function TreatmentsTable({
   if (treatments.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-ink-900/15 px-6 py-16 text-center">
-        <p className="font-display text-lg text-ink-700">No open quotes</p>
+        <p className="font-medium text-ink-700">{mode === "open" ? "No open quotes" : "Nothing closed yet"}</p>
         <p className="mt-1 text-sm text-ink-500">
-          Add a declined quote, or import a list, to start the automated
-          follow-up sequence.
+          {mode === "open"
+            ? "Add a quote, or import a spreadsheet, and follow-up starts by itself."
+            : "Quotes you mark Booked, Declined or Lost appear here."}
         </p>
       </div>
     );
@@ -121,125 +111,152 @@ export function TreatmentsTable({
           {error}
         </p>
       )}
-      <div className="overflow-x-auto rounded-xl border border-ink-900/8 bg-cream-0">
-        <table className="w-full min-w-[820px] border-collapse text-left text-sm">
+      <ul className="divide-y divide-ink-900/6 rounded-xl border border-ink-900/8 bg-cream-0 sm:hidden">
+        {treatments.map((t) => (
+          <li key={t.id} className="px-4 py-3.5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                {t.patient ? (
+                  <Link href={`/patients/${t.patient.id}`} className="block truncate font-medium text-ink-900">
+                    {t.patient.full_name}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-ink-900">–</span>
+                )}
+                <span className="block truncate text-[13px] text-ink-500">{t.treatment_type}</span>
+              </div>
+              <span className="shrink-0 font-mono text-sm text-ink-900">{formatGBP(t.value_pence)}</span>
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <span className="flex flex-wrap items-center gap-2 text-[13px] text-ink-500">
+                <StatusBadge status={displayStatus(t)} />
+                {mode === "open" ? age(t.quoted_on) : (closedOn(t) ?? "")}
+              </span>
+              <span className="flex items-center gap-1">
+                {mode === "open" ? (
+                  <>
+                    <Button size="sm" variant="secondary" disabled={isPending} onClick={() => close(t.id, "converted")}>
+                      Booked
+                    </Button>
+                    <ActionsMenu
+                      label={`More actions for ${t.patient?.full_name ?? "this quote"}`}
+                      disabled={isPending}
+                      items={[
+                        { label: "Declined", onSelect: () => close(t.id, "declined") },
+                        { label: "Lost (went quiet)", onSelect: () => close(t.id, "lost") },
+                        t.status === "future_intent"
+                          ? { label: "Resume follow-up now", onSelect: () => setConfirming({ id: t.id, kind: "resume" }) }
+                          : { label: "Pause until…", onSelect: () => setPausingId(t.id) },
+                      ]}
+                    />
+                  </>
+                ) : (
+                  <Button size="sm" variant="ghost" disabled={isPending} onClick={() => setConfirming({ id: t.id, kind: "reopen" })}>
+                    Reopen
+                  </Button>
+                )}
+              </span>
+            </div>
+            {pausingId === t.id && (
+              <div className="mt-3 rounded-lg bg-cream-50 p-3">
+                <PausePanel
+                  patientName={t.patient?.full_name ?? "this patient"}
+                  busy={isPending}
+                  onCancel={() => setPausingId(null)}
+                  onPause={(date) => pause(t.id, date)}
+                />
+              </div>
+            )}
+            {confirming?.id === t.id && (
+              <div className="mt-3 space-y-2 rounded-lg bg-cream-50 p-3 text-sm">
+                <p className="text-ink-700">
+                  {confirming.kind === "resume" ? "Restart follow-up now? The first message goes today." : "Reopen this quote and restart its remaining messages?"}
+                </p>
+                <div className="flex gap-2">
+                  <Button size="sm" disabled={isPending} onClick={() => (confirming.kind === "resume" ? resume(t.id) : reopen(t.id))}>
+                    {confirming.kind === "resume" ? "Resume now" : "Reopen"}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="hidden overflow-x-auto rounded-xl border border-ink-900/8 bg-cream-0 sm:block">
+        <table className="w-full min-w-[640px] border-collapse text-left text-sm">
           <thead>
-            <tr className="border-b border-ink-900/8 text-xs uppercase tracking-wide text-ink-500">
-              {mode === "open" && (
-                <th className="w-10 py-3 pl-5 font-medium">#</th>
-              )}
-              <th className="px-5 py-3 font-medium">Patient</th>
-              <th className="px-5 py-3 font-medium">Treatment</th>
-              {dentistNames && (
-                <th className="px-5 py-3 font-medium">Dentist</th>
-              )}
-              <th className="px-5 py-3 text-right font-medium">Value</th>
-              <th className="px-5 py-3 font-medium">Quoted</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">
-                {mode === "open" ? "Mark as" : "Closed"}
+            <tr className="border-b border-ink-900/8 text-[13px] text-ink-500">
+              <th className="px-5 py-3 font-medium">Patient and treatment</th>
+              {dentistNames && <th className="px-4 py-3 font-medium">Dentist</th>}
+              <th className="px-4 py-3 text-right font-medium">Value</th>
+              <th className="px-4 py-3 font-medium">Quoted</th>
+              <th className="px-4 py-3 font-medium">{mode === "open" ? "Status" : "Outcome"}</th>
+              <th className="px-4 py-3">
+                <span className="sr-only">Actions</span>
               </th>
             </tr>
           </thead>
           <tbody>
             {treatments.map((t, i) => (
               <Fragment key={t.id}>
-                <tr className="border-b border-ink-900/6 last:border-0">
-                  {mode === "open" && (
-                    <td className="py-4 pl-5 font-mono text-xs tabular-nums text-ink-500">
-                      {i + 1}
-                    </td>
-                  )}
-                  <td className="px-5 py-4 text-ink-900">
-                    {t.patient?.full_name ?? "—"}
+                <tr className="border-b border-ink-900/6 last:border-0 hover:bg-cream-50/60">
+                  <td className="max-w-[18rem] px-5 py-3.5">
+                    {t.patient ? (
+                      <Link href={`/patients/${t.patient.id}`} className="block truncate font-medium text-ink-900 hover:text-teal-700 hover:underline">
+                        {t.patient.full_name}
+                      </Link>
+                    ) : (
+                      <span className="font-medium text-ink-900">—</span>
+                    )}
+                    <span className="block truncate text-[13px] text-ink-500">{t.treatment_type}</span>
                   </td>
-                  <td className="px-5 py-4 text-ink-700">{t.treatment_type}</td>
                   {dentistNames && (
-                    <td className="px-5 py-4 text-ink-700">
-                      {t.dentist_user_id
-                        ? (dentistNames[t.dentist_user_id] ??
-                          "Former team member")
-                        : "—"}
+                    <td className="whitespace-nowrap px-4 py-3.5 text-ink-700">
+                      {t.dentist_user_id ? (dentistNames[t.dentist_user_id] ?? "Former team member") : <span className="text-ink-300">Not assigned</span>}
                     </td>
                   )}
-                  <td className="px-5 py-4 text-right font-mono tabular-nums text-ink-900">
+                  <td className="whitespace-nowrap px-4 py-3.5 text-right font-mono tabular-nums text-ink-900">
                     {formatGBP(t.value_pence)}
                   </td>
-                  <td className="px-5 py-4 text-ink-700">
+                  <td className="whitespace-nowrap px-4 py-3.5 text-ink-700">
                     {formatDate(t.quoted_on)}
-                    {mode === "open" && (
-                      <span className="block text-xs text-ink-500">
-                        {age(t.quoted_on)}
-                      </span>
-                    )}
+                    {mode === "open" && <span className="block text-xs text-ink-500">{age(t.quoted_on)}</span>}
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="whitespace-nowrap px-4 py-3.5">
                     <StatusBadge status={displayStatus(t)} />
-                    {t.status === "future_intent" &&
-                      t.future_intent_remind_at && (
-                        <span className="mt-1 block text-xs text-ink-500">
-                          until {formatDate(t.future_intent_remind_at)}
-                        </span>
-                      )}
+                    {mode === "open" && t.status === "future_intent" && t.future_intent_remind_at && (
+                      <span className="mt-1 block text-xs text-ink-500">until {formatDate(t.future_intent_remind_at)}</span>
+                    )}
+                    {mode === "closed" && closedOn(t) && <span className="mt-1 block text-xs text-ink-500">{closedOn(t)}</span>}
                   </td>
-                  <td className="px-5 py-4">
-                    {mode === "open" ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        <div
-                          className="flex gap-1.5"
-                          data-tour={i === 0 ? "outcome-buttons" : undefined}
-                        >
-                          {OUTCOME_BUTTONS.map(
-                            ({ outcome, label, variant }) => (
-                              <Button
-                                key={outcome}
-                                size="sm"
-                                variant={variant}
-                                disabled={isPending}
-                                onClick={() => close(t.id, outcome)}
-                              >
-                                {label}
-                              </Button>
-                            ),
-                          )}
-                        </div>
-                        {t.status === "future_intent" ? (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            disabled={isPending}
-                            onClick={() => resume(t.id)}
-                          >
-                            Resume now
+                  <td className="whitespace-nowrap px-4 py-3.5">
+                    <div className="flex items-center justify-end gap-1" data-tour={mode === "open" && i === 0 ? "outcome-buttons" : undefined}>
+                      {mode === "open" ? (
+                        <>
+                          <Button size="sm" variant="secondary" disabled={isPending} onClick={() => close(t.id, "converted")}>
+                            Booked
                           </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="ghost"
+                          <ActionsMenu
+                            label={`More actions for ${t.patient?.full_name ?? "this quote"}`}
                             disabled={isPending}
-                            onClick={() =>
-                              setPausingId(pausingId === t.id ? null : t.id)
-                            }
-                          >
-                            Pause…
-                          </Button>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <span className="text-ink-700">
-                          {closedOn(t) ?? "—"}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          disabled={isPending}
-                          onClick={() => reopen(t.id)}
-                        >
+                            items={[
+                              { label: "Declined", onSelect: () => close(t.id, "declined") },
+                              { label: "Lost (went quiet)", onSelect: () => close(t.id, "lost") },
+                              t.status === "future_intent"
+                                ? { label: "Resume follow-up now", onSelect: () => setConfirming({ id: t.id, kind: "resume" }) }
+                                : { label: "Pause until…", onSelect: () => setPausingId(t.id) },
+                            ]}
+                          />
+                        </>
+                      ) : (
+                        <Button size="sm" variant="ghost" disabled={isPending} onClick={() => setConfirming({ id: t.id, kind: "reopen" })}>
                           Reopen
                         </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </td>
                 </tr>
                 {pausingId === t.id && (
@@ -251,6 +268,29 @@ export function TreatmentsTable({
                         onCancel={() => setPausingId(null)}
                         onPause={(date) => pause(t.id, date)}
                       />
+                    </td>
+                  </tr>
+                )}
+                {confirming?.id === t.id && (
+                  <tr className="border-b border-ink-900/6 bg-cream-50">
+                    <td colSpan={99} className="px-5 py-4">
+                      <div className="flex flex-wrap items-center gap-3 text-sm">
+                        <p className="text-ink-700">
+                          {confirming.kind === "resume"
+                            ? "Restart follow-up now? The first message goes today."
+                            : "Reopen this quote? It goes back on the open list and its remaining messages restart (the next one tomorrow at the earliest)."}
+                        </p>
+                        <Button
+                          size="sm"
+                          disabled={isPending}
+                          onClick={() => (confirming.kind === "resume" ? resume(t.id) : reopen(t.id))}
+                        >
+                          {confirming.kind === "resume" ? "Resume now" : "Reopen"}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>
+                          Cancel
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 )}
