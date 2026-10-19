@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { patientTreatmentName } from "@/lib/treatment-name";
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -29,7 +30,7 @@ export function renderTemplate(
   return body
     .replaceAll("{dentistName}", vars.dentistName?.trim() || "your dentist")
     .replaceAll("{patientName}", vars.patientName)
-    .replaceAll("{treatmentType}", vars.treatmentType)
+    .replaceAll("{treatmentType}", patientTreatmentName(vars.treatmentType))
     .replaceAll("{practiceName}", vars.practiceName);
 }
 

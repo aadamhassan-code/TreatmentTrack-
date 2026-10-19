@@ -7,6 +7,7 @@ import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { formatDate, formatGBP, ukDate } from "@/lib/utils";
+import { patientTreatmentName } from "@/lib/treatment-name";
 import { MAX_IMPORT_ROWS, MAX_QUOTE_AGE_MONTHS, TEMPLATE_CSV, parseImport } from "@/lib/import";
 import { importTreatments, type ImportResult } from "@/lib/actions/import";
 
@@ -162,7 +163,14 @@ export function ImportTreatmentsForm() {
                           </td>
                           <td className="px-3 py-2">{r.patientName || "—"}</td>
                           <td className="px-3 py-2 font-mono text-xs">{r.phone || "—"}</td>
-                          <td className="px-3 py-2">{r.treatmentType || "—"}</td>
+                          <td className="px-3 py-2">
+                            {r.treatmentType || "—"}
+                            {r.mergedLines.length > 0 && (
+                              <span className="mt-0.5 block text-xs text-ink-500">
+                                Patient sees: &ldquo;{patientTreatmentName(r.treatmentType)}&rdquo;
+                              </span>
+                            )}
+                          </td>
                           <td className="px-3 py-2 text-right font-mono tabular-nums">
                             {r.valuePence ? formatGBP(r.valuePence) : "—"}
                           </td>
