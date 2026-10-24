@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LinkButton } from "@/components/ui/button";
+import { PRIMARY_CTA } from "@/lib/launch";
 
 export const metadata: Metadata = {
   title: "Data & security — TreatmentTrack",
@@ -149,8 +150,8 @@ export default function SecurityPage() {
           .
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <LinkButton href="/signup" size="lg">
-            Get started
+          <LinkButton href={PRIMARY_CTA.href} size="lg">
+            {PRIMARY_CTA.label}
           </LinkButton>
           <LinkButton href="/request-callback?topic=walkthrough" variant="secondary" size="lg">
             Book a walkthrough

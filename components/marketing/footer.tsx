@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIMARY_CTA, SIGNUP_OPEN } from "@/lib/launch";
 
 export function MarketingFooter() {
   return (
@@ -45,8 +46,8 @@ export function MarketingFooter() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/signup" className="hover:text-teal-900">
-                    Sign up
+                  <Link href={PRIMARY_CTA.href} className="hover:text-teal-900">
+                    {SIGNUP_OPEN ? "Sign up" : "Founding practices"}
                   </Link>
                 </li>
                 <li>

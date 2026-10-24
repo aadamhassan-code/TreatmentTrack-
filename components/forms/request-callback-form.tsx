@@ -9,7 +9,21 @@ import {
   type RequestCallbackResult,
 } from "@/lib/actions/callback-requests";
 
-export function RequestCallbackForm({ topic = "sales" }: { topic?: "sales" | "walkthrough" } = {}) {
+export type CallbackTopic = "sales" | "walkthrough" | "founding";
+
+const SUCCESS: Record<CallbackTopic, string> = {
+  founding: "Thanks — we'll call you within one working day to show you TreatmentTrack and talk through getting started.",
+  walkthrough: "Thanks — we'll be in touch within one working day to arrange your walkthrough.",
+  sales: "We'll be in touch within one working day to talk through pricing for your group.",
+};
+
+const PRACTICE_SOFTWARE = ["Dentally", "Software of Excellence (Exact)", "R4", "CareStack", "Other"];
+
+export function RequestCallbackForm({
+  topic = "sales",
+  plan,
+}: { topic?: CallbackTopic; plan?: string } = {}) {
+  const founding = topic === "founding";
   const [state, formAction, pending] = useActionState<RequestCallbackResult, FormData>(
     async (_prev, formData) => requestCallback(formData),
     {}
@@ -31,10 +45,7 @@ export function RequestCallbackForm({ topic = "sales" }: { topic?: "sales" | "wa
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-teal-600" />
           <div>
             <p className="font-medium text-ink-900">Request received</p>
-            <p className="mt-1 text-sm text-ink-500">
-              We&rsquo;ll be in touch within one working day to talk through
-              pricing for your group.
-            </p>
+            <p className="mt-1 text-sm text-ink-500">{SUCCESS[topic]}</p>
           </div>
         </CardBody>
       </Card>
@@ -45,6 +56,7 @@ export function RequestCallbackForm({ topic = "sales" }: { topic?: "sales" | "wa
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Honeypot for bots — hidden from people and screen readers. */}
       <input type="hidden" name="topic" value={topic} />
+      {plan && <input type="hidden" name="plan" value={plan} />}
       <input
         type="text"
         name="website"
@@ -78,10 +90,43 @@ export function RequestCallbackForm({ topic = "sales" }: { topic?: "sales" | "wa
                 type="email"
                 required
                 className="mt-1.5 w-full rounded-lg border border-ink-900/15 bg-cream-0 px-3.5 py-2.5 text-sm focus:border-teal-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
-                placeholder="priya@group.co.uk"
+                placeholder={founding ? "priya@riversidedental.co.uk" : "priya@group.co.uk"}
               />
             </div>
           </div>
+          {founding && (
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-ink-900" htmlFor="practiceName">
+                  Practice name
+                </label>
+                <input
+                  id="practiceName"
+                  name="practiceName"
+                  required
+                  maxLength={200}
+                  className="mt-1.5 w-full rounded-lg border border-ink-900/15 bg-cream-0 px-3.5 py-2.5 text-sm focus:border-teal-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
+                  placeholder="Riverside Dental"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink-900" htmlFor="software">
+                  Practice software
+                </label>
+                <select
+                  id="software"
+                  name="software"
+                  defaultValue=""
+                  className="mt-1.5 w-full rounded-lg border border-ink-900/15 bg-cream-0 px-3.5 py-2.5 text-sm focus:border-teal-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
+                >
+                  <option value="">Choose…</option>
+                  {PRACTICE_SOFTWARE.map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-ink-900" htmlFor="phone">
@@ -117,7 +162,11 @@ export function RequestCallbackForm({ topic = "sales" }: { topic?: "sales" | "wa
               name="message"
               rows={3}
               className="mt-1.5 w-full rounded-lg border border-ink-900/15 bg-cream-0 px-3.5 py-2.5 text-sm focus:border-teal-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
-              placeholder="Rollout timeline, existing PMS, number of sites live vs planned…"
+              placeholder={
+                founding
+                  ? "e.g. roughly how many private treatment quotes you give a month, or the best time to call"
+                  : "Rollout timeline, existing PMS, number of sites live vs planned…"
+              }
             />
           </div>
         </CardBody>
@@ -128,7 +177,7 @@ export function RequestCallbackForm({ topic = "sales" }: { topic?: "sales" | "wa
       )}
 
       <Button type="submit" size="lg" disabled={pending} className="w-full">
-        {pending ? "Sending…" : "Request a callback"}
+        {pending ? "Sending…" : founding ? "Request a call" : "Request a callback"}
       </Button>
     </form>
   );

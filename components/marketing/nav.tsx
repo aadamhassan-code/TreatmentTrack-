@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LinkButton } from "@/components/ui/button";
+import { PRIMARY_CTA, SIGNUP_OPEN } from "@/lib/launch";
 
 export function Logo({ className }: { className?: string }) {
   return (
@@ -40,8 +41,15 @@ export function MarketingNav() {
           <LinkButton href="/login" variant="ghost" size="sm" className="whitespace-nowrap">
             Log in
           </LinkButton>
-          <LinkButton href="/signup" variant="primary" size="sm" className="whitespace-nowrap">
-            Get started
+          <LinkButton href={PRIMARY_CTA.href} variant="primary" size="sm" className="whitespace-nowrap">
+            {SIGNUP_OPEN ? (
+              PRIMARY_CTA.label
+            ) : (
+              <>
+                <span className="sm:hidden">Join</span>
+                <span className="hidden sm:inline">Join as a founder</span>
+              </>
+            )}
           </LinkButton>
         </div>
       </div>

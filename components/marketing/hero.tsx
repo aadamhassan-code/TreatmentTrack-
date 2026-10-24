@@ -1,5 +1,6 @@
 import { LinkButton } from "@/components/ui/button";
 import { FollowUpTrack } from "@/components/marketing/follow-up-track";
+import { PRIMARY_CTA } from "@/lib/launch";
 
 export function Hero() {
   return (
@@ -14,8 +15,8 @@ export function Hero() {
             your name. It stops the moment the patient books or says no, and shows you exactly what it recovered.
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <LinkButton href="/signup" variant="gilt" size="lg">
-              Get started
+            <LinkButton href={PRIMARY_CTA.href} variant="gilt" size="lg">
+              {PRIMARY_CTA.label}
             </LinkButton>
             <LinkButton href="/request-callback?topic=walkthrough" variant="onDark" size="lg">
               Book a walkthrough

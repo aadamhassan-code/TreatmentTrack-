@@ -5,6 +5,7 @@ import { LinkButton } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Check, PhoneCall } from "lucide-react";
+import { PRIMARY_CTA, SIGNUP_OPEN } from "@/lib/launch";
 
 const plans = [
   {
@@ -128,13 +129,15 @@ export function PricingTable() {
               )}
 
               <LinkButton
-                href={`/signup?plan=${plan.name.toLowerCase()}&interval=${
-                  annual ? "annual" : "monthly"
-                }`}
+                href={
+                  SIGNUP_OPEN
+                    ? `/signup?plan=${plan.name.toLowerCase()}&interval=${annual ? "annual" : "monthly"}`
+                    : `${PRIMARY_CTA.href}&plan=${plan.name.toLowerCase()}`
+                }
                 variant={plan.highlight ? "primary" : "secondary"}
                 className="mt-6 w-full"
               >
-                Choose {plan.name}
+                {SIGNUP_OPEN ? `Choose ${plan.name}` : `Join with ${plan.name}`}
               </LinkButton>
 
               <ul className="mt-6 space-y-3">

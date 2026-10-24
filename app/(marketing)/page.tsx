@@ -6,6 +6,7 @@ import { ComplianceStrip } from "@/components/marketing/compliance-strip";
 import { PricingTable } from "@/components/marketing/pricing-table";
 import { Faq } from "@/components/marketing/faq";
 import { LinkButton } from "@/components/ui/button";
+import { PRIMARY_CTA } from "@/lib/launch";
 
 export default function LandingPage() {
   return (
@@ -53,8 +54,8 @@ export default function LandingPage() {
             Setting up takes an afternoon, and a single booked case can cover months of TreatmentTrack.
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <LinkButton href="/signup" variant="gilt" size="lg">
-              Get started
+            <LinkButton href={PRIMARY_CTA.href} variant="gilt" size="lg">
+              {PRIMARY_CTA.label}
             </LinkButton>
             <LinkButton href="/request-callback?topic=walkthrough" variant="onDark" size="lg">
               Book a walkthrough
