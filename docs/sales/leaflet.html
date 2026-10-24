@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>TreatmentTrack — one-page leaflet</title>
+<style>
+@font-face { font-family: "Young Serif"; src: url("../../app/fonts/young-serif-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; src: url("../../app/fonts/inter-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; }
+@page { size: A4; margin: 0; }
+:root { --green:#12382e; --green-2:#1d5c47; --mint:#e2efe6; --paper:#fbf9f3; --gilt:#c9962b; --gilt-soft:#f7e7c2; --ink:#211e16; --ink-2:#423d30; --muted:#6e6755; --line:#ece6d6; }
+* { box-sizing: border-box; margin: 0; }
+html, body { background: #fff; }
+body { font-family: Inter, system-ui, sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.page { width: 210mm; height: 297mm; display: flex; flex-direction: column; background: var(--paper); overflow: hidden; }
+.top { background: var(--green); color: var(--paper); padding: 11mm 15mm 9mm; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+.brand small { margin-left: auto; font-weight: 500; font-size: 11px; color: var(--mint); letter-spacing: .02em; }
+h1 { font-family: "Young Serif", Georgia, serif; font-weight: 400; font-size: 34px; line-height: 1.06; margin-top: 6mm; max-width: 17ch; }
+h1 em { font-style: normal; color: var(--gilt); }
+.lede { margin-top: 4mm; font-size: 13.5px; line-height: 1.55; color: #d6e6dc; max-width: 62ch; }
+.body { padding: 7mm 15mm 0; display: grid; grid-template-columns: 1.25fr 1fr; gap: 9mm; }
+h2 { font-family: "Young Serif", Georgia, serif; font-weight: 400; font-size: 19px; color: var(--green); margin-bottom: 4mm; }
+.q { font-family: "Young Serif", Georgia, serif; font-size: 15px; color: var(--green); background: var(--gilt-soft); border-radius: 10px; padding: 3.5mm 5mm; margin-bottom: 5mm; line-height: 1.35; }
+ol { list-style: none; padding: 0; display: grid; gap: 3.5mm; }
+ol li { display: grid; grid-template-columns: 9mm 1fr; gap: 3mm; }
+ol li b { display: block; font-size: 13px; margin-bottom: 1mm; }
+ol li p { font-size: 11.5px; line-height: 1.5; color: var(--ink-2); }
+.n { width: 8mm; height: 8mm; border-radius: 50%; background: var(--green); color: var(--paper); display: grid; place-items: center; font-weight: 600; font-size: 12px; }
+.phone { background: #fff; border: 1px solid var(--line); border-radius: 22px; padding: 5mm 4.5mm; box-shadow: 0 10px 30px -18px rgba(18,56,46,.45); }
+.phone .meta { font-size: 10px; color: var(--muted); text-align: center; margin-bottom: 3mm; }
+.bubble { background: var(--mint); border-radius: 14px 14px 14px 4px; padding: 3mm 3.5mm; font-size: 11.5px; line-height: 1.45; color: var(--ink); }
+.reply { margin: 3mm 0 0 auto; width: fit-content; max-width: 80%; background: var(--green); color: var(--paper); border-radius: 14px 14px 4px 14px; padding: 2.5mm 3.5mm; font-size: 11.5px; }
+.booked { margin-top: 3.5mm; font-size: 10.5px; color: var(--green-2); font-weight: 600; text-align: center; }
+.trust { margin-top: 5mm; border-top: 1px solid var(--line); padding-top: 4mm; display: grid; gap: 2.2mm; }
+.trust div { font-size: 11px; line-height: 1.45; color: var(--ink-2); padding-left: 5mm; position: relative; }
+.trust div::before { content: ""; position: absolute; left: 0; top: 1.6mm; width: 2.2mm; height: 2.2mm; border-radius: 50%; background: var(--gilt); }
+.prices { margin: 6mm 15mm 6mm; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.prices div { padding: 3.5mm 4mm; }
+.prices div + div { border-left: 1px solid var(--line); }
+.prices b { font-size: 12px; display: block; }
+.prices span { font-size: 10.5px; color: var(--muted); }
+.prices strong { font-family: "Young Serif", Georgia, serif; font-weight: 400; font-size: 20px; color: var(--green); display: block; margin-top: 1mm; }
+.foot { margin-top: auto; background: var(--green); color: var(--paper); padding: 7mm 15mm 8mm; display: grid; grid-template-columns: 1fr auto; gap: 8mm; align-items: center; }
+.foot h3 { font-family: "Young Serif", Georgia, serif; font-weight: 400; font-size: 21px; }
+.foot p { font-size: 11.5px; line-height: 1.5; color: #d6e6dc; margin-top: 2mm; max-width: 58ch; }
+.foot .url { color: var(--gilt-soft); font-weight: 600; margin-top: 3mm; font-size: 12.5px; }
+.foot .contact { margin-top: 1.5mm; font-size: 11.5px; color: var(--paper); }
+.qrbox { background: var(--paper); border-radius: 10px; padding: 3mm; text-align: center; }
+.qr { width: 27mm; height: 27mm; display: block; }
+.qrbox span { display: block; font-size: 8.5px; color: var(--green); margin-top: 1.5mm; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="page">
+  <section class="top">
+    <div class="brand">
+      <svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="20" height="20" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="5" y="5" width="4" height="12" rx="1.5" fill="currentColor"/><rect x="11" y="5" width="4" height="7" rx="1.5" fill="currentColor"/></svg>
+      TreatmentTrack
+      <small>Built by UK dentists</small>
+    </div>
+    <h1>Turn &ldquo;I&rsquo;ll think about it&rdquo; into <em>booked treatment.</em></h1>
+    <p class="lede">TreatmentTrack follows up every treatment plan your practice quotes, with polite texts and emails in your practice&rsquo;s name. It stops the moment the patient books or says no &mdash; and once they book, it tracks the case through to completion.</p>
+  </section>
+
+  <section class="body">
+    <div>
+      <p class="q">How much treatment did your practice quote last month that still hasn&rsquo;t booked?</p>
+      <h2>How it works</h2>
+      <ol>
+        <li><span class="n">1</span><div><b>Add your quotes</b><p>Type one in, or import your unbooked treatment plans from Dentally, SOE, R4 or CareStack.</p></div></li>
+        <li><span class="n">2</span><div><b>It follows up for you</b><p>Polite messages on a schedule you choose &mdash; e.g. 3 days, a week, a month &mdash; in your words. Patient says &ldquo;after Christmas&rdquo;? Pause it until then.</p></div></li>
+        <li><span class="n">3</span><div><b>Stops when they decide</b><p>Mark it booked, declined or lost and messages stop straight away. Replies of STOP are honoured automatically.</p></div></li>
+        <li><span class="n">4</span><div><b>Track it to the final fit</b><p>Booked patients move along a board for each treatment &mdash; consultation, consent, placement, scan, fit &mdash; and anyone overdue is flagged.</p></div></li>
+      </ol>
+    </div>
+    <div>
+      <h2>What your patient sees</h2>
+      <div class="phone">
+        <p class="meta">Text from your practice &middot; 3 days after the quote</p>
+        <div class="bubble">Hi Sarah, just checking in about the implant we quoted at Riverside Dental. Ready to book, or have questions? Reply STOP to opt out.</div>
+        <div class="reply">Yes please &mdash; could I come in next week?</div>
+        <p class="booked">Booked &middot; follow-ups stop automatically</p>
+      </div>
+      <div class="trust">
+        <div>Opt-out offered and recorded for every quote (PECR soft opt-in)</div>
+        <div>Patient records stored in the UK, with a data processing agreement for your practice</div>
+        <div>Dentists only see their own patients; owners see the whole practice</div>
+        <div>Reports show exactly how much was booked from follow-ups</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="prices">
+    <div><b>Solo</b><span>One dentist&rsquo;s quotes</span><strong>£99/mo</strong></div>
+    <div><b>Practice</b><span>A whole practice team</span><strong>£199/mo</strong></div>
+    <div><b>Multisite</b><span>Up to 5 practices</span><strong>£399/mo</strong></div>
+  </section>
+
+  <section class="foot">
+    <div>
+      <h3>Become a founding practice</h3>
+      <p>We&rsquo;re opening TreatmentTrack to a small number of UK practices first, with founding-practice pricing and set-up done with you. One recovered implant or aligner case typically covers it for well over a year.</p>
+      <p class="url">treatmenttrack.vercel.app</p>
+      <p class="contact">[Your name] &middot; [phone] &middot; [email]</p>
+    </div>
+    <div class="qrbox"><svg class="qr" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges"><path stroke="#12382e" d="M0 0.5h7m2 0h1m1 0h1m1 0h2m2 0h2m1 0h3m1 0h2m2 0h1m1 0h7M0 1.5h1m5 0h1m3 0h1m1 0h2m3 0h1m1 0h1m1 0h2m2 0h3m2 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h1m1 0h1m8 0h4m1 0h1m3 0h1m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h3m2 0h2m1 0h2m1 0h1m2 0h1m1 0h4m2 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h2m1 0h1m2 0h1m1 0h1m2 0h1m2 0h2m1 0h2m1 0h1m1 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h1m1 0h3m1 0h1m3 0h1m3 0h1m1 0h5m1 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h1m2 0h1m1 0h1m1 0h2m6 0h1m2 0h3M0 8.5h1m1 0h5m3 0h3m5 0h1m1 0h3m1 0h4m2 0h5M1 9.5h1m1 0h3m5 0h6m4 0h1m4 0h1m1 0h2m1 0h1m2 0h2M0 10.5h1m3 0h1m1 0h1m1 0h4m5 0h2m1 0h1m2 0h2m1 0h8m1 0h2M0 11.5h2m1 0h2m2 0h4m1 0h1m3 0h1m1 0h1m2 0h1m1 0h1m3 0h2m1 0h3m3 0h1M0 12.5h2m1 0h1m1 0h5m1 0h1m2 0h1m2 0h1m2 0h1m1 0h2m1 0h2m2 0h8M1 13.5h1m1 0h2m5 0h1m1 0h3m2 0h5m1 0h1m2 0h1m1 0h2m1 0h1M1 14.5h1m1 0h2m1 0h1m1 0h3m2 0h3m1 0h1m3 0h1m2 0h1m1 0h8m1 0h2M3 15.5h1m1 0h1m1 0h1m1 0h2m4 0h4m2 0h3m2 0h3m1 0h3m2 0h2M2 16.5h1m3 0h1m3 0h7m4 0h1m1 0h4m1 0h5m1 0h1m1 0h1M1 17.5h3m4 0h3m1 0h1m2 0h1m2 0h1m1 0h3m1 0h1m9 0h2M0 18.5h3m2 0h2m2 0h4m2 0h2m2 0h1m6 0h3m1 0h4m1 0h2M0 19.5h1m1 0h1m1 0h2m4 0h1m1 0h2m1 0h1m3 0h5m8 0h1m3 0h1M0 20.5h3m2 0h4m2 0h7m1 0h2m1 0h1m1 0h4m1 0h2m1 0h3M2 21.5h1m1 0h2m1 0h2m1 0h1m2 0h1m2 0h1m2 0h2m2 0h4m1 0h1m4 0h1M0 22.5h1m3 0h1m1 0h3m3 0h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h3m1 0h1m1 0h3m1 0h2M2 23.5h4m3 0h2m3 0h1m8 0h2m2 0h3m1 0h2m2 0h1M1 24.5h2m1 0h5m1 0h2m3 0h1m2 0h1m1 0h8m1 0h2m1 0h1m1 0h1m1 0h1M0 25.5h1m2 0h1m3 0h1m2 0h1m3 0h3m4 0h1m1 0h1m4 0h2m1 0h1m1 0h1M0 26.5h1m2 0h4m3 0h3m5 0h1m1 0h3m1 0h2m1 0h10M0 27.5h1m1 0h2m1 0h1m2 0h1m1 0h1m2 0h1m2 0h1m4 0h3m3 0h1m1 0h2m4 0h2M0 28.5h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h2m1 0h2m1 0h2m4 0h5m1 0h7m1 0h1M8 29.5h1m1 0h1m1 0h2m2 0h2m1 0h3m1 0h1m4 0h1m3 0h2M0 30.5h7m3 0h1m1 0h1m1 0h4m3 0h1m4 0h1m1 0h1m1 0h1m1 0h1m1 0h3M0 31.5h1m5 0h1m1 0h2m1 0h1m3 0h10m3 0h1m3 0h2m1 0h2M0 32.5h1m1 0h3m1 0h1m1 0h1m3 0h1m2 0h2m2 0h1m1 0h1m2 0h9m1 0h2M0 33.5h1m1 0h3m1 0h1m1 0h3m1 0h4m2 0h1m1 0h1m1 0h2m5 0h2m1 0h2m2 0h1M0 34.5h1m1 0h3m1 0h1m1 0h1m4 0h1m1 0h2m2 0h1m1 0h2m4 0h1m7 0h2M0 35.5h1m5 0h1m2 0h1m1 0h1m3 0h1m3 0h3m2 0h1m1 0h3m1 0h1m1 0h1m3 0h1M0 36.5h7m1 0h1m3 0h4m1 0h1m1 0h1m3 0h4m3 0h1m1 0h5"/></svg><span>Scan to request a call</span></div>
+  </section>
+</div>
+</body>
+</html>
